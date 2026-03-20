@@ -67,7 +67,7 @@ func main() {
 	schemaService := services.NewSchemaService(dao)
 	
 	// Setup ERPNext Accounting translated entities
-	if err := erpnext_accounting.Setup(context.Background(), schemaService); err != nil {
+	if err := erpnext_accounting.Setup(context.Background(), schemaService, dao); err != nil {
 		log.Printf("Warning: failed to setup ERPNext accounting entities: %v\n", err)
 	}
 
