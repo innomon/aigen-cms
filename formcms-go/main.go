@@ -107,6 +107,11 @@ func main() {
 	pageService := services.NewPageService(schemaService, graphqlService)
 	a2uiService := services.NewA2UIService()
 
+	chatService, err := services.NewChatService("agentic.yaml", entityService, schemaService, a2uiService)
+	if err != nil {
+		log.Printf("Warning: failed to initialize chat service (agentic config missing or invalid): %v", err)
+	}
+
 	// Initialize Prototype Components for A2UI
 	a2uiService.UpdateComponent(context.Background(), services.A2UIComponent{
 		ID:   "root",
@@ -211,6 +216,10 @@ func main() {
 	staticApi := api.NewStaticApi()
 	pageApi := api.NewPageApi(pageService)
 	a2uiApi := api.NewA2UIApi(a2uiService)
+	var chatApi *api.ChatApi
+	if chatService != nil {
+		chatApi = api.NewChatApi(chatService)
+	}
 
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
@@ -235,6 +244,9 @@ func main() {
 	staticApi.Register(r)
 	pageApi.Register(r)
 	a2uiApi.Register(r)
+	if chatApi != nil {
+		chatApi.Register(r)
+	}
 
 	domain := os.Getenv("DOMAIN")
 	if isExternalDomain(domain) {
