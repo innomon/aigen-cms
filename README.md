@@ -4,11 +4,14 @@ A headless CMS framework in Go, rewritten from the [FormCMS](https://github.com/
 
 ## Features
 
+- **A2UI Protocol**: Real-time Agent-to-User Interface for streaming backend-driven UI updates (SSE) using a high-performance adjacency list model.
+- **Frappe/ERPNext Integration**: Built-in support for importing and mapping Frappe Doctypes to native CMS schemas.
+- **Advanced RBAC**: Granular Role-Based Access Control with field-level and row-level security filters.
 - **Dynamic Data Modeling**: Define entities and attributes via UI or API.
 - **REST & GraphQL APIs**: Auto-generated CRUD and GraphQL endpoints.
 - **File Storage**: Local and S3 support with image processing.
 - **Social Engagement**: Built-in likes, bookmarks, and comments.
-- **Embedded UI**: React Admin panel and GrapesJS page builder included.
+- **Embedded UI**: React Admin panel, GrapesJS page builder, and dynamic A2UI renderer included.
 
 ## Getting Started
 

@@ -46,6 +46,25 @@ Instead of nested JSON, we will implement the **Adjacency List** format (v0.8/v0
 ]
 ```
 
+## Entity Layer Integration
+
+The A2UI and Entity layers interact through a **Producer-Consumer** model, where the Entity layer acts as the data producer and the A2UI layer acts as the intelligent presentation consumer.
+
+### 1. Data Sourcing (A2UI → Entity)
+The `A2UIService` is not a database layer; it is a **State Manager**. When the Agent needs to display a `DataTable` or a `Chart`, the `A2UIService` calls the `EntityService` to fetch the real data.
+- **Flow**: `A2UIService` → `entityService.List("Organization", pagination, filters, sorts)` → Result is mapped to A2UI `DataTable` attributes.
+
+### 2. Event-Driven UI Updates (Entity → A2UI)
+To make the UI "Live," we implement a **Hook/Observer** pattern. When a user (or another process) modifies an entity through the standard CMS API, the `EntityService` notifies the `A2UIService`.
+- **Flow**: `EntityService` triggers an internal `OnEntityChange` event → `A2UIService` identifies which A2UI components (like a "Lead Counter" or "Pipeline Chart") are affected → It updates those component structures → SSE pushes the delta to all connected clients.
+
+### 3. Action Execution (A2UI → Entity)
+When a user interacts with an A2UI component (e.g., clicking a "Deactivate" button in a `DataTable`), the signal flows back to the backend to perform a standard CMS operation.
+- **Flow**: Frontend `renderer.js` sends `action: "delete"` to `/api/a2ui/action` → `A2UIService` resolves the target entity and ID → Calls `entityService.Delete(ctx, entityName, id)` → Success triggers an SSE update to remove the row from the UI.
+
+### 4. Unified Permission Enforcement
+The interaction is **security-aware**. Because `A2UIService` calls `EntityService` using the user's `context`, all existing RBAC, Row-Level Filters, and Field-Level Permissions are automatically enforced. The A2UI layer cannot "leak" data that the standard Entity layer would otherwise block.
+
 ## Security Considerations
 - **Sanitization**: The renderer MUST NOT use `eval()` or `innerHTML` directly with untrusted strings. Attributes like `content` will be set via `textContent`.
 - **Trusted Catalog**: Only components registered in the client-side `ComponentCatalog` will be rendered. Unknown types will be ignored.
