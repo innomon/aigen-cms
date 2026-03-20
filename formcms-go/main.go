@@ -40,6 +40,26 @@ func main() {
 	}
 	defer dao.Close()
 
+	// Ensure core tables exist
+	_, err = dao.GetDb().ExecContext(context.Background(), `
+		CREATE TABLE IF NOT EXISTS __schemas (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			schema_id TEXT,
+			name TEXT,
+			type TEXT,
+			settings TEXT,
+			description TEXT,
+			is_latest BOOLEAN,
+			publication_status TEXT,
+			created_at DATETIME,
+			created_by TEXT,
+			deleted BOOLEAN
+		)
+	`)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	// Initialize Services
 	systemSettings := descriptors.DefaultSystemSettings()
 	fileStore := filestore.NewLocalFileStore(systemSettings.LocalFileStoreOptions.PathPrefix, systemSettings.LocalFileStoreOptions.UrlPrefix)
@@ -52,6 +72,12 @@ func main() {
 	}
 
 	entityService := services.NewEntityService(schemaService, dao)
+	
+	// Setup ERPNext Accounting Test Data
+	if err := erpnext_accounting.SetupTestData(context.Background(), entityService); err != nil {
+		log.Printf("Warning: failed to setup ERPNext accounting test data: %v\n", err)
+	}
+
 	graphqlService := services.NewGraphQLService(schemaService, entityService)
 	assetService := services.NewAssetService(dao, fileStore, systemSettings)
 	engagementService := services.NewEngagementService(dao)
