@@ -8,6 +8,7 @@ const (
 	Text               DataType = "Text"
 	String             DataType = "String"
 	Boolean            DataType = "Boolean"
+	Float              DataType = "Float"
 	DataTypeLookup     DataType = "Lookup"
 	DataTypeJunction   DataType = "Junction"
 	DataTypeCollection DataType = "Collection"

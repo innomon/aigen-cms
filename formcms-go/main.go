@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"crypto/tls"
 	"fmt"
 	"log"
@@ -13,6 +14,7 @@ import (
 	"github.com/formcms/formcms-go/core/api"
 	"github.com/formcms/formcms-go/core/descriptors"
 	"github.com/formcms/formcms-go/core/services"
+	"github.com/formcms/formcms-go/erpnext_accounting"
 	"github.com/formcms/formcms-go/infrastructure/filestore"
 	"github.com/formcms/formcms-go/infrastructure/relationdbdao"
 	"golang.org/x/crypto/acme/autocert"
@@ -43,6 +45,12 @@ func main() {
 	fileStore := filestore.NewLocalFileStore(systemSettings.LocalFileStoreOptions.PathPrefix, systemSettings.LocalFileStoreOptions.UrlPrefix)
 
 	schemaService := services.NewSchemaService(dao)
+	
+	// Setup ERPNext Accounting translated entities
+	if err := erpnext_accounting.Setup(context.Background(), schemaService); err != nil {
+		log.Printf("Warning: failed to setup ERPNext accounting entities: %v\n", err)
+	}
+
 	entityService := services.NewEntityService(schemaService, dao)
 	graphqlService := services.NewGraphQLService(schemaService, entityService)
 	assetService := services.NewAssetService(dao, fileStore, systemSettings)

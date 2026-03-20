@@ -12,6 +12,7 @@ const (
 	UpdatedTime      ColumnType = "UpdatedTime" // default/onupdate set as current datetime
 	Text             ColumnType = "Text"        // slow performance compare to string
 	String           ColumnType = "String"      // has length limit 255
+	Float            ColumnType = "Float"
 )
 
 type Column struct {

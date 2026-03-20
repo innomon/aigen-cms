@@ -137,6 +137,8 @@ func (d *PostgresDao) stringToColType(s string) datamodels.ColumnType {
 		return datamodels.Text
 	case "character varying":
 		return datamodels.String
+	case "numeric", "decimal", "real", "double precision":
+		return datamodels.Float
 	default:
 		return datamodels.String
 	}
@@ -166,6 +168,8 @@ func (d *PostgresDao) colTypeToString(col datamodels.Column) string {
 			length = 255
 		}
 		return fmt.Sprintf("VARCHAR(%d)", length)
+	case datamodels.Float:
+		return "NUMERIC(18,4)"
 	default:
 		return "TEXT"
 	}

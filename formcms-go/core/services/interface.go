@@ -77,5 +77,5 @@ type IAuditService interface {
 }
 
 type IPageService interface {
-	Render(ctx context.Context, path string, strArgs map[string][]string) (string, error)
+	Render(ctx context.Context, path string, strArgs datamodels.StrArgs) (string, error)
 }

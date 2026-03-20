@@ -124,6 +124,9 @@ func (d *SqliteDao) stringToColType(s string) datamodels.ColumnType {
 	if strings.Contains(s, "int") {
 		return datamodels.Int
 	}
+	if strings.Contains(s, "real") || strings.Contains(s, "float") || strings.Contains(s, "double") || strings.Contains(s, "numeric") || strings.Contains(s, "decimal") {
+		return datamodels.Float
+	}
 	return datamodels.Text
 }
 
@@ -147,6 +150,8 @@ func (d *SqliteDao) colTypeToString(col datamodels.Column) string {
 		return "TEXT"
 	case datamodels.String:
 		return "TEXT"
+	case datamodels.Float:
+		return "REAL"
 	default:
 		return "TEXT"
 	}

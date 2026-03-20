@@ -2,16 +2,11 @@ package api
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
-	"path/filepath"
 	"strconv"
-	"time"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/formcms/formcms-go/core/descriptors"
 	"github.com/formcms/formcms-go/core/services"
-	gonanoid "github.com/matoous/go-nanoid/v2"
 )
 
 type AssetApi struct {
@@ -24,7 +19,6 @@ func NewAssetApi(assetService *services.AssetService) *AssetApi {
 
 func (a *AssetApi) Register(r chi.Router) {
 	r.Route("/api/assets", func(r chi.Router) {
-		r.Post("/upload", a.Upload)
 		r.Get("/chunk-status", a.GetChunkStatus)
 		r.Post("/upload-chunk", a.UploadChunk)
 		r.Post("/commit-chunks", a.CommitChunks)

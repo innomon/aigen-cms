@@ -4,6 +4,7 @@ formcms/
 # Exclude executables
 # Standard Go binary naming and common executable extensions
 formcms-go/formcms-go
+formcms-go/formcms
 *.exe
 *.exe~
 *.dll
