@@ -4,6 +4,10 @@ A headless CMS framework in Go, rewritten from the [FormCMS](https://github.com/
 
 ## Features
 
+- **Agentic Workflows**: Integrated multi-agent system powered by Gemini models for orchestrating tasks.
+  - **Router Agent**: Intelligently routes user requests between specialized sub-agents.
+  - **CMS Agent**: Manages and queries CMS data and schemas autonomously.
+  - **UI Agent**: Dynamically updates the A2UI dashboard components based on user interactions and data changes.
 - **A2UI Protocol**: Real-time Agent-to-User Interface for streaming backend-driven UI updates (SSE) using a high-performance adjacency list model.
 - **Frappe/ERPNext Integration**: Built-in support for importing and mapping Frappe Doctypes to native CMS schemas.
 - **Advanced RBAC**: Granular Role-Based Access Control with field-level and row-level security filters.
