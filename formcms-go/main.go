@@ -1,9 +1,12 @@
 package main
 
 import (
+	"crypto/tls"
 	"fmt"
 	"log"
+	"net"
 	"net/http"
+	"os"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -12,7 +15,19 @@ import (
 	"github.com/formcms/formcms-go/core/services"
 	"github.com/formcms/formcms-go/infrastructure/filestore"
 	"github.com/formcms/formcms-go/infrastructure/relationdbdao"
+	"golang.org/x/crypto/acme/autocert"
 )
+
+func isExternalDomain(domain string) bool {
+	if domain == "" || domain == "localhost" {
+		return false
+	}
+	// Check if it's an IP address
+	if net.ParseIP(domain) != nil {
+		return false
+	}
+	return true
+}
 
 func main() {
 	// Initialize Database
@@ -74,6 +89,32 @@ func main() {
 	staticApi.Register(r)
 	pageApi.Register(r)
 
-	fmt.Println("Starting FormCMS Go on :5000...")
-	log.Fatal(http.ListenAndServe(":5000", r))
+	domain := os.Getenv("DOMAIN")
+	if isExternalDomain(domain) {
+		certManager := autocert.Manager{
+			Prompt:     autocert.AcceptTOS,
+			HostPolicy: autocert.HostWhitelist(domain),
+			Cache:      autocert.DirCache("certs"),
+		}
+
+		server := &http.Server{
+			Addr:    ":443",
+			Handler: r,
+			TLSConfig: &tls.Config{
+				GetCertificate: certManager.GetCertificate,
+			},
+		}
+
+		fmt.Printf("Starting FormCMS Go on %s with autocert...\n", domain)
+		// Redirect HTTP to HTTPS
+		go http.ListenAndServe(":80", certManager.HTTPHandler(nil))
+		log.Fatal(server.ListenAndServeTLS("", ""))
+	} else {
+		port := os.Getenv("PORT")
+		if port == "" {
+			port = "5000"
+		}
+		fmt.Printf("Starting FormCMS Go on :%s...\n", port)
+		log.Fatal(http.ListenAndServe(":"+port, r))
+	}
 }
