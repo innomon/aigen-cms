@@ -37,3 +37,65 @@ type LoadedEntity struct {
 	PublicationStatusAttribute LoadedAttribute
 	UpdatedAtAttribute         LoadedAttribute
 }
+
+func (e *Entity) SelectQuery(builder squirrel.StatementBuilderType) squirrel.SelectBuilder {
+	columns := []string{e.PrimaryKey}
+	for _, attr := range e.Attributes {
+		if attr.DataType.IsLocal() {
+			columns = append(columns, attr.Field)
+		}
+	}
+	return builder.Select(columns...).From(e.TableName)
+}
+
+func (e *Entity) ToLoadedEntity() *LoadedEntity {
+	loadedAttributes := make([]LoadedAttribute, len(e.Attributes))
+	var primaryKeyAttribute, labelAttribute, publicationStatusAttribute, updatedAtAttribute LoadedAttribute
+
+	for i, attr := range e.Attributes {
+		loaded := attr.ToLoaded(e.TableName)
+		loadedAttributes[i] = loaded
+		if attr.Field == e.PrimaryKey {
+			primaryKeyAttribute = loaded
+		}
+		if attr.Field == e.LabelAttributeName {
+			labelAttribute = loaded
+		}
+		if attr.Field == "publicationStatus" {
+			publicationStatusAttribute = loaded
+		}
+		if attr.Field == "updatedAt" {
+			updatedAtAttribute = loaded
+		}
+	}
+
+	return &LoadedEntity{
+		Attributes:                 loadedAttributes,
+		PrimaryKeyAttribute:        primaryKeyAttribute,
+		LabelAttribute:             labelAttribute,
+		PublicationStatusAttribute: publicationStatusAttribute,
+		UpdatedAtAttribute:         updatedAtAttribute,
+		DeletedAttribute: LoadedAttribute{
+			Attribute: Attribute{
+				Field:    "deleted",
+				DataType: Int,
+			},
+			TableName: e.TableName,
+		},
+		Name:                     e.Name,
+		DisplayName:              e.DisplayName,
+		TableName:                e.TableName,
+		PrimaryKey:               e.PrimaryKey,
+		LabelAttributeName:       e.LabelAttributeName,
+		DefaultPageSize:          e.DefaultPageSize,
+		DefaultPublicationStatus: e.DefaultPublicationStatus,
+		PageUrl:                  e.PageUrl,
+		TagsQuery:                e.TagsQuery,
+		TagsQueryParam:           e.TagsQueryParam,
+		TitleTagField:            e.TitleTagField,
+		SubtitleTagField:         e.SubtitleTagField,
+		ContentTagField:          e.ContentTagField,
+		ImageTagField:            e.ImageTagField,
+		PublishTimeTagField:      e.PublishTimeTagField,
+	}
+}

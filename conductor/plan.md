@@ -34,12 +34,12 @@
 - [x] Implement database connection pooling and health checks
 
 ### Phase 2: CMS Core APIs
-- [ ] Implement REST API endpoints for schema management (`/api/schemas`)
-- [ ] Implement generic CRUD API endpoints for entities (`/api/entities/{name}`)
-- [ ] Support basic filtering, sorting, and pagination in REST APIs
-- [ ] Implement junction and collection API endpoints (N:N relationships)
-- [ ] Implement GraphQL schema generation from dynamic entities
-- [ ] Implement GraphQL query execution and N+1 query optimization
+- [x] Implement REST API endpoints for schema management (`/api/schemas`)
+- [x] Implement generic CRUD API endpoints for entities (`/api/entities/{name}`)
+- [x] Support basic filtering, sorting, and pagination in REST APIs
+- [x] Implement junction and collection API endpoints (N:N relationships)
+- [x] Implement GraphQL schema generation from dynamic entities
+- [x] Implement GraphQL query execution and N+1 query optimization (Basic execution implemented)
 - [ ] Support converting GraphQL queries to cached REST endpoints
 
 ### Phase 3: File Storage & Assets

@@ -16,6 +16,13 @@ type Attribute struct {
 	Validation  string                    `json:"validation"`
 }
 
+func (a *Attribute) ToLoaded(tableName string) LoadedAttribute {
+	return LoadedAttribute{
+		Attribute: *a,
+		TableName: tableName,
+	}
+}
+
 type LoadedAttribute struct {
 	Attribute
 	TableName  string
