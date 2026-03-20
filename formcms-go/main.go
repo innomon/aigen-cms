@@ -105,6 +105,96 @@ func main() {
 	notificationService := services.NewNotificationService(dao)
 	auditService := services.NewAuditService(dao)
 	pageService := services.NewPageService(schemaService, graphqlService)
+	a2uiService := services.NewA2UIService()
+
+	// Initialize Prototype Components for A2UI
+	a2uiService.UpdateComponent(context.Background(), services.A2UIComponent{
+		ID:   "root",
+		Type: "Column",
+		Children: []string{"header", "card-1", "card-2", "card-3"},
+	})
+	a2uiService.UpdateComponent(context.Background(), services.A2UIComponent{
+		ID:   "header",
+		Type: "Heading",
+		Attributes: map[string]interface{}{
+			"content": "A2UI Agent Intelligence Hub",
+			"level":   1,
+		},
+	})
+	a2uiService.UpdateComponent(context.Background(), services.A2UIComponent{
+		ID:   "card-1",
+		Type: "Card",
+		Children: []string{"counter-text", "increment-btn"},
+	})
+	a2uiService.UpdateComponent(context.Background(), services.A2UIComponent{
+		ID:   "counter-text",
+		Type: "Text",
+		Attributes: map[string]interface{}{
+			"content": "Live System Counter: 0",
+			"count":   0.0,
+		},
+	})
+	a2uiService.UpdateComponent(context.Background(), services.A2UIComponent{
+		ID:   "increment-btn",
+		Type: "Button",
+		Attributes: map[string]interface{}{
+			"label":   "Trigger Agent Signal",
+			"variant": "success",
+			"action":  "increment",
+		},
+	})
+
+	// Add Data Table Card
+	a2uiService.UpdateComponent(context.Background(), services.A2UIComponent{
+		ID:   "card-2",
+		Type: "Card",
+		Children: []string{"table-title", "audit-table"},
+	})
+	a2uiService.UpdateComponent(context.Background(), services.A2UIComponent{
+		ID:   "table-title",
+		Type: "Heading",
+		Attributes: map[string]interface{}{
+			"content": "Recent System Activity",
+			"level":   4,
+		},
+	})
+	a2uiService.UpdateComponent(context.Background(), services.A2UIComponent{
+		ID:   "audit-table",
+		Type: "DataTable",
+		Attributes: map[string]interface{}{
+			"columns": []string{"User", "Action", "Timestamp"},
+			"rows": []map[string]interface{}{
+				{"User": "admin@example.com", "Action": "Login", "Timestamp": "2024-03-20 10:00:01"},
+				{"User": "editor@example.com", "Action": "Update Lead", "Timestamp": "2024-03-20 10:15:22"},
+				{"User": "admin@example.com", "Action": "Delete Log", "Timestamp": "2024-03-20 11:30:00"},
+			},
+		},
+	})
+
+	// Add Graph Card
+	a2uiService.UpdateComponent(context.Background(), services.A2UIComponent{
+		ID:   "card-3",
+		Type: "Card",
+		Children: []string{"chart-title", "traffic-chart"},
+	})
+	a2uiService.UpdateComponent(context.Background(), services.A2UIComponent{
+		ID:   "chart-title",
+		Type: "Heading",
+		Attributes: map[string]interface{}{
+			"content": "Traffic Analytics",
+			"level":   4,
+		},
+	})
+	a2uiService.UpdateComponent(context.Background(), services.A2UIComponent{
+		ID:   "traffic-chart",
+		Type: "Chart",
+		Attributes: map[string]interface{}{
+			"chartType": "line",
+			"label":     "Requests per Minute",
+			"labels":    []string{"10:00", "10:10", "10:20", "10:30", "10:40", "10:50"},
+			"data":      []float64{12, 19, 3, 5, 2, 3},
+		},
+	})
 
 	// Initialize APIs
 	authApi := api.NewAuthApi(authService, permissionService)
@@ -120,6 +210,7 @@ func main() {
 	auditApi := api.NewAuditApi(auditService, authApi)
 	staticApi := api.NewStaticApi()
 	pageApi := api.NewPageApi(pageService)
+	a2uiApi := api.NewA2UIApi(a2uiService)
 
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
@@ -143,6 +234,7 @@ func main() {
 	auditApi.Register(r)
 	staticApi.Register(r)
 	pageApi.Register(r)
+	a2uiApi.Register(r)
 
 	domain := os.Getenv("DOMAIN")
 	if isExternalDomain(domain) {
