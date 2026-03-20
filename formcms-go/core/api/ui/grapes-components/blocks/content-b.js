@@ -13,7 +13,7 @@ export const contentB = {
                 <div class="h-1 w-20 bg-red-500 dark:bg-red-400 rounded"></div>
             </div>
             <p class="lg:w-1/2 w-full leading-relaxed text-gray-500 dark:text-gray-400 prose">
-                This section is powered by <a href="https://github.com/FormCMS/FormCMS/" class="text-indigo-500 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300">FormCMS</a> \`Content B\` custom blocks.
+                This section is powered by <a href="https://github.com/FormCMS/FormCMS/" class="text-indigo-500 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300">AiGen CMS</a> \`Content B\` custom blocks.
             </p>
         </div>
         <div class="flex flex-wrap -m-4" data-gjs-type="foreach" data-component="foreach">

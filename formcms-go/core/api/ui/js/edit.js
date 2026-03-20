@@ -118,7 +118,7 @@ function loadEditor(id, type, name, refId) {
             hideOverlay();
 
             if (schemaData) {
-                document.title = `${schemaData.name} - ${type} setting - FormCMS Schema Builder`;
+                document.title = `${schemaData.name} - ${type} setting - AiGen CMS Schema Builder`;
                 if (refId) {
                     schema = {type, settings: {[type]: schemaData.settings[type]}};
                 } else {

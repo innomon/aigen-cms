@@ -1,7 +1,7 @@
-# FormCMS Go Rewrite Context
+# AiGen CMS Rewrite Context
 
 ## Mission
-You are migrating the `FormCMS` backend from C# (ASP.NET Core) to Go (Golang). The project maintains a headless CMS with dynamic data modeling (database tables created dynamically based on user schema), GraphQL support, a page designer (GrapesJS), and extensive user engagement tracking (views, likes, comments).
+You are migrating the `AiGen CMS` (formerly `FormCMS`) backend from C# (ASP.NET Core) to Go (Golang). The project maintains a headless CMS with dynamic data modeling (database tables created dynamically based on user schema), GraphQL support, a page designer (GrapesJS), and extensive user engagement tracking (views, likes, comments).
 
 ## Important Architectural Decisions
 - **Framework**: `net/http` + `chi` for routing.

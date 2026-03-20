@@ -160,7 +160,7 @@ func main() {
 			},
 		}
 
-		fmt.Printf("Starting FormCMS Go on %s with autocert...\n", domain)
+		fmt.Printf("Starting AiGen CMS on %s with autocert...\n", domain)
 		// Redirect HTTP to HTTPS
 		go http.ListenAndServe(":80", certManager.HTTPHandler(nil))
 		log.Fatal(server.ListenAndServeTLS("", ""))
@@ -169,7 +169,7 @@ func main() {
 		if port == "" {
 			port = "5000"
 		}
-		fmt.Printf("Starting FormCMS Go on :%s...\n", port)
+		fmt.Printf("Starting AiGen CMS on :%s...\n", port)
 		log.Fatal(http.ListenAndServe(":"+port, r))
 	}
 }

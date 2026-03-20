@@ -1,4 +1,4 @@
-# FormCMS Go
+# AiGen CMS
 
 A headless CMS framework in Go, rewritten from the [FormCMS](https://github.com/formcms/formcms) original C# implementation.
 
