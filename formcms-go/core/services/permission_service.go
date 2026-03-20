@@ -2,8 +2,6 @@ package services
 
 import (
 	"context"
-	"fmt"
-	"strings"
 
 	"github.com/Masterminds/squirrel"
 	"github.com/formcms/formcms-go/infrastructure/relationdbdao"
@@ -108,9 +106,24 @@ func (s *PermissionService) GetRowFilters(ctx context.Context, userId int64, ent
 }
 
 func (s *PermissionService) GetFieldPermissions(ctx context.Context, entityName string, roles []string) (map[string]map[string]bool, error) {
-	// This will return a map of field names to their allowed actions (read, write)
-	// based on the permlevel assigned to fields and roles
-	
+	// Load entity attributes first to know what fields we have
+	entity, err := s.schemaService.LoadEntity(ctx, entityName)
+	if err != nil {
+		return nil, err
+	}
+
+	fieldPerms := make(map[string]map[string]bool)
+
+	// SA always has full access to all fields
+	for _, r := range roles {
+		if r == "sa" {
+			for _, attr := range entity.Attributes {
+				fieldPerms[attr.Field] = map[string]bool{"read": true, "write": true}
+			}
+			return fieldPerms, nil
+		}
+	}
+
 	// Fetch all doc perms for these roles and entity
 	query, args, err := s.dao.GetBuilder().Select("permlevel", "read", "write").From("__doc_perms").
 		Join("__roles ON __doc_perms.role = __roles.id").
@@ -137,19 +150,16 @@ func (s *PermissionService) GetFieldPermissions(ctx context.Context, entityName 
 		if _, ok := permLevels[lvl]; !ok {
 			permLevels[lvl] = map[string]bool{"read": false, "write": false}
 		}
-		if r { permLevels[lvl]["read"] = true }
-		if w { permLevels[lvl]["write"] = true }
+		if r {
+			permLevels[lvl]["read"] = true
+		}
+		if w {
+			permLevels[lvl]["write"] = true
+		}
 	}
 
-	// Load entity attributes to match with permlevels
-	entity, err := s.schemaService.LoadEntity(ctx, entityName)
-	if err != nil {
-		return nil, err
-	}
-
-	fieldPerms := make(map[string]map[string]bool)
+	// Match attributes with permlevels
 	for _, attr := range entity.Attributes {
-		// Assuming Attribute struct has a PermLevel field. Need to check descriptors/attribute.go
 		lvl := attr.PermLevel
 		if p, ok := permLevels[lvl]; ok {
 			fieldPerms[attr.Field] = p

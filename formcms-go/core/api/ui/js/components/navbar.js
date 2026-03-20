@@ -12,6 +12,8 @@ export function loadNavBar(container) {
             <a class="nav-item nav-link border-item" href="./list.html?type=query">Queries</a>
             <a class="nav-item nav-link border-item" href="./list.html?type=page">Pages</a>
             <a class="nav-item nav-link border-item" href="./edit.html?type=menu&name=top-menu-bar">MenuItems</a>
+            <a class="nav-item nav-link border-item" href="./entity_list.html?name=User">Users</a>
+            <a class="nav-item nav-link border-item" href="./entity_list.html?name=Role">Roles</a>
             <a class="nav-item nav-link border-item" href="../admin">Admin Panel</a>
             <a id="nav-item-exit" class="nav-item nav-link border-item" href="#">Exit</a>
         </div>

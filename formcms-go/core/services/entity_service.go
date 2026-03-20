@@ -11,6 +11,7 @@ import (
 	"github.com/formcms/formcms-go/core/descriptors"
 	"github.com/formcms/formcms-go/infrastructure/relationdbdao"
 	"github.com/formcms/formcms-go/utils/datamodels"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type EntityService struct {
@@ -116,8 +117,21 @@ func (s *EntityService) Insert(ctx context.Context, name string, data datamodels
 		if p, ok := fieldPerms[k]; ok && !p["write"] {
 			continue // Skip unauthorized fields
 		}
+
+		val := v
+		// Handle password hashing if it's the User entity and password_hash field
+		if name == "User" && k == "password_hash" {
+			if str, ok := v.(string); ok && str != "" {
+				hashed, err := bcrypt.GenerateFromPassword([]byte(str), bcrypt.DefaultCost)
+				if err != nil {
+					return nil, err
+				}
+				val = string(hashed)
+			}
+		}
+
 		columns = append(columns, k)
-		values = append(values, v)
+		values = append(values, val)
 	}
 
 	query, args, err := s.dao.GetBuilder().Insert(entity.TableName).Columns(columns...).Values(values...).ToSql()
@@ -160,7 +174,22 @@ func (s *EntityService) Update(ctx context.Context, name string, data datamodels
 		if p, ok := fieldPerms[k]; ok && !p["write"] {
 			continue // Skip unauthorized fields
 		}
-		sb = sb.Set(k, v)
+
+		val := v
+		// Handle password hashing if it's the User entity and password_hash field
+		if name == "User" && k == "password_hash" {
+			if str, ok := v.(string); ok && str != "" {
+				hashed, err := bcrypt.GenerateFromPassword([]byte(str), bcrypt.DefaultCost)
+				if err != nil {
+					return nil, err
+				}
+				val = string(hashed)
+			} else {
+				continue // Don't update password if it's empty
+			}
+		}
+
+		sb = sb.Set(k, val)
 	}
 
 	query, args, err := sb.Where(squirrel.Eq{entity.PrimaryKey: id}).ToSql()
