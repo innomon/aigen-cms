@@ -16,3 +16,4 @@ obj/
 # Firebase logs
 firebase-debug.log
 .firebase/
+.gemini/tmp
