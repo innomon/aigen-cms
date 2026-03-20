@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"strings"
 	"time"
@@ -79,10 +80,11 @@ func (s *AuthService) Login(ctx context.Context, email, password string) (string
 
 	row := s.dao.GetDb().QueryRowContext(ctx, query, args...)
 	var id int64
-	var e, pass, role, avatar string
+	var e, pass, role string
+	var avatar sql.NullString
 	var createdAt, updatedAt time.Time
 	if err := row.Scan(&id, &e, &pass, &role, &avatar, &createdAt, &updatedAt); err != nil {
-		return "", fmt.Errorf("user not found")
+		return "", fmt.Errorf("user not found: %w", err)
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(pass), []byte(password)); err != nil {
@@ -107,10 +109,11 @@ func (s *AuthService) Me(ctx context.Context, userId int64) (*descriptors.User, 
 
 	row := s.dao.GetDb().QueryRowContext(ctx, query, args...)
 	var id int64
-	var e, pass, role, avatar string
+	var e, pass, role string
+	var avatar sql.NullString
 	var createdAt, updatedAt time.Time
 	if err := row.Scan(&id, &e, &pass, &role, &avatar, &createdAt, &updatedAt); err != nil {
-		return nil, fmt.Errorf("user not found")
+		return nil, fmt.Errorf("user not found: %w", err)
 	}
 
 	return &descriptors.User{
@@ -118,7 +121,7 @@ func (s *AuthService) Me(ctx context.Context, userId int64) (*descriptors.User, 
 		Email:        e,
 		PasswordHash: pass,
 		Role:         role,
-		AvatarPath:   avatar,
+		AvatarPath:   avatar.String,
 		CreatedAt:    createdAt,
 		UpdatedAt:    updatedAt,
 	}, nil
