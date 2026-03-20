@@ -36,3 +36,9 @@ type IGraphQLService interface {
 	Query(ctx context.Context, query string, variables map[string]interface{}) (interface{}, error)
 	ExecuteStoredQuery(ctx context.Context, name string, variables map[string]interface{}) (interface{}, error)
 }
+
+type IAssetService interface {
+	Save(ctx context.Context, asset *descriptors.Asset) (*descriptors.Asset, error)
+	UpdateAssetsLinks(ctx context.Context, oldAssetIds []int64, newAssetPaths []string, entityName string, recordId int64) error
+	GetAssetByPath(ctx context.Context, path string) (*descriptors.Asset, error)
+}

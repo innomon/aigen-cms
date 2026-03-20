@@ -10,6 +10,7 @@ import (
 	"github.com/formcms/formcms-go/core/api"
 	"github.com/formcms/formcms-go/core/descriptors"
 	"github.com/formcms/formcms-go/core/services"
+	"github.com/formcms/formcms-go/infrastructure/filestore"
 	"github.com/formcms/formcms-go/infrastructure/relationdbdao"
 )
 
@@ -23,15 +24,20 @@ func main() {
 	defer dao.Close()
 
 	// Initialize Services
+	systemSettings := descriptors.DefaultSystemSettings()
+	fileStore := filestore.NewLocalFileStore(systemSettings.LocalFileStoreOptions.PathPrefix, systemSettings.LocalFileStoreOptions.UrlPrefix)
+
 	schemaService := services.NewSchemaService(dao)
 	entityService := services.NewEntityService(schemaService, dao)
 	graphqlService := services.NewGraphQLService(schemaService, entityService)
+	assetService := services.NewAssetService(dao, fileStore, systemSettings)
 
 	// Initialize APIs
 	schemaApi := api.NewSchemaApi(schemaService)
 	entityApi := api.NewEntityApi(entityService)
 	graphqlApi := api.NewGraphQLApi(graphqlService)
 	queryApi := api.NewQueryApi(graphqlService)
+	assetApi := api.NewAssetApi(assetService)
 
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
@@ -46,6 +52,7 @@ func main() {
 	entityApi.Register(r)
 	graphqlApi.Register(r)
 	queryApi.Register(r)
+	assetApi.Register(r)
 
 	fmt.Println("Starting FormCMS Go on :5000...")
 	log.Fatal(http.ListenAndServe(":5000", r))

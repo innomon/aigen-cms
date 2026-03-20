@@ -43,12 +43,12 @@
 - [x] Support converting GraphQL queries to cached REST endpoints
 
 ### Phase 3: File Storage & Assets
-- [ ] Define file storage interface (`StorageProvider`)
-- [ ] Implement local file storage provider
-- [ ] Support extensible cloud storage providers (S3, etc.)
-- [ ] Implement asset tracking in database (`__assets`, `__assetLinks`)
-- [ ] Implement chunked file upload API
-- [ ] Implement image resizing and compression (using `disintegration/imaging`)
+- [x] Define file storage interface (`StorageProvider`)
+- [x] Implement local file storage provider
+- [x] Support extensible cloud storage providers (S3 implemented)
+- [x] Implement asset tracking in database (`__assets`, `__assetLinks`)
+- [x] Implement chunked file upload API
+- [x] Implement image resizing and compression (using `disintegration/imaging`)
 
 ### Phase 4: Social Engagement & Comments
 - [ ] Implement `__engagements` tracking with buffered writes (Go channels/routines)
