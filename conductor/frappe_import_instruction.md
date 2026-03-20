@@ -28,7 +28,7 @@ This document serves as the Standard Operating Procedure (SOP) and execution pla
    Read the Frappe JSON to understand the fields, data types, mandatory constraints, and relational links (`options` targeting other DocTypes).
 
 ### Phase 2: Schema Translation (JSON Creation)
-Create a new JSON file in `formcms-go/<module_name>/schemas/<doctype_snake_case>.json`.
+Create a new JSON file in `formcms-go/apps/<module_name>/schemas/<doctype_snake_case>.json`.
 
 **Translation Rules:**
 * **DocType -> Entity:** Map the DocType name directly to the `Entity` name (e.g., "Journal Entry" -> "JournalEntry").
@@ -43,7 +43,7 @@ Create a new JSON file in `formcms-go/<module_name>/schemas/<doctype_snake_case>
   * Frappe `Link` ➔ FormCMS DataType: `Lookup`, Options: `<TargetEntityName>`
   * Frappe `Table` ➔ FormCMS DataType: `Collection`, Options: `<ChildEntityName>|<ParentLinkField>`
 
-**Example Schema (`schemas/currency.json`):**
+**Example Schema (`formcms-go/apps/<module_name>/schemas/currency.json`):**
 ```json
 {
   "Name": "Currency",
@@ -58,13 +58,13 @@ Create a new JSON file in `formcms-go/<module_name>/schemas/<doctype_snake_case>
 ```
 
 ### Phase 3: SQL Migration Generation
-Generate standard SQL migration files (e.g., `formcms-go/<module_name>/migrations/001_initial_schema.sql`). 
+Generate standard SQL migration files (e.g., `formcms-go/apps/<module_name>/migrations/001_initial_schema.sql`). 
 1. Write the `CREATE TABLE` statements equivalent to the JSON schemas for PostgreSQL and SQLite.
 2. Include system columns: `id`, `created_at`, `updated_at`, `deleted`.
 3. Generate `INSERT INTO` statements containing baseline production data (if applicable, e.g., default Indian states, tax categories).
 
 ### Phase 4: Test Data Generation (Indian Locale)
-Create a JSON file in `formcms-go/<module_name>/data/test_data.json`.
+Create a JSON file in `formcms-go/apps/<module_name>/data/test_data.json`.
 1. **Locale Requirements:** Use INR (`₹`), Indian addresses (Mumbai, Delhi), Indian tax logic (GST, SGST, CGST), and standard Indian corporate names.
 2. **Relational Data Mapping:** Use the application's built-in reference resolver to manage foreign keys in test data. Prefix referenced keys with `$Ref:`.
 
@@ -90,11 +90,21 @@ Create a JSON file in `formcms-go/<module_name>/data/test_data.json`.
 ]
 ```
 
-### Phase 5: Implementation & Wiring
-Ensure the Go application is wired to read the newly generated JSON files during startup.
-1. The `Setup(ctx, schemaService, dao)` function should loop through `schemas/*.json` and automatically register the FormCMS schema and invoke `dao.CreateTable`.
-2. The `SetupTestData(ctx, entityService)` function should parse `data/test_data.json`, resolve `$Ref:` references dynamically, and insert records via `entityService.Insert` and `entityService.CollectionInsert`.
-*(Note: If the generic JSON loader logic is already present in the module, simply ensure the files are placed in the correct directories without needing to rewrite the Go loader).*
+### Phase 5: Implementation & Wiring (Configuration)
+The `formcms-go` framework utilizes a fully configuration-driven initialization system for apps.
+1. Place the generated application module inside `formcms-go/apps/<module_name>`.
+2. Add the `<module_name>` to the `enabled_apps` array inside `formcms-go/apps/apps.json` so the core system knows to load the schemas, run migrations (if applicable), and process the test data during startup. Do NOT modify the Go source code.
+
+**Example Configuration (`formcms-go/apps/apps.json`):**
+```json
+{
+  "enabled_apps": [
+    "erpnext_accounting",
+    "crm",
+    "<module_name>"
+  ]
+}
+```
 
 ---
 
@@ -103,4 +113,5 @@ Ensure the Go application is wired to read the newly generated JSON files during
 2. Are all monetary values, companies, and date structures conforming to the **Indian locale**?
 3. Did I generate a corresponding `.sql` migration script?
 4. Is the Frappe source code appropriately isolated in `.gemini/tmp/temp_repos/`?
-5. Does `go build` complete without errors after adding these definitions?
+5. Did I update `formcms-go/apps/apps.json` to enable the new module?
+6. Does the test server boot up and seed the configuration data without errors?

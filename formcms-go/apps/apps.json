@@ -1,0 +1,6 @@
+{
+  "enabled_apps": [
+    "erpnext_accounting",
+    "crm"
+  ]
+}

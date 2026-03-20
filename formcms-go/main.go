@@ -9,14 +9,14 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
 	"github.com/formcms/formcms-go/core/api"
+	"github.com/formcms/formcms-go/core/apps"
 	"github.com/formcms/formcms-go/core/descriptors"
 	"github.com/formcms/formcms-go/core/services"
-	"github.com/formcms/formcms-go/erpnext_accounting"
 	"github.com/formcms/formcms-go/infrastructure/filestore"
 	"github.com/formcms/formcms-go/infrastructure/relationdbdao"
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 	"golang.org/x/crypto/acme/autocert"
 )
 
@@ -65,17 +65,26 @@ func main() {
 	fileStore := filestore.NewLocalFileStore(systemSettings.LocalFileStoreOptions.PathPrefix, systemSettings.LocalFileStoreOptions.UrlPrefix)
 
 	schemaService := services.NewSchemaService(dao)
-	
-	// Setup ERPNext Accounting translated entities
-	if err := erpnext_accounting.Setup(context.Background(), schemaService, dao); err != nil {
-		log.Printf("Warning: failed to setup ERPNext accounting entities: %v\n", err)
+
+	enabledApps, err := apps.LoadAppsConfig()
+	if err != nil {
+		log.Fatalf("Failed to load apps config: %v", err)
+	}
+
+	for _, appName := range enabledApps {
+		log.Printf("Setting up app schemas: %s", appName)
+		if err := apps.SetupApp(context.Background(), appName, schemaService, dao); err != nil {
+			log.Printf("Warning: failed to setup app %s schemas: %v\n", appName, err)
+		}
 	}
 
 	entityService := services.NewEntityService(schemaService, dao)
-	
-	// Setup ERPNext Accounting Test Data
-	if err := erpnext_accounting.SetupTestData(context.Background(), entityService); err != nil {
-		log.Printf("Warning: failed to setup ERPNext accounting test data: %v\n", err)
+
+	for _, appName := range enabledApps {
+		log.Printf("Setting up test data for app: %s", appName)
+		if err := apps.SetupAppTestData(context.Background(), appName, entityService); err != nil {
+			log.Printf("Warning: failed to setup test data for app %s: %v\n", appName, err)
+		}
 	}
 
 	graphqlService := services.NewGraphQLService(schemaService, entityService)
