@@ -90,10 +90,11 @@ async function getDefine() {
 }
 
 function loadEditor(id, type, name, refId) {
+    const lowercaseType = type.toLowerCase();
     editor = new JSONEditor(editorBox, {
         ajax: true,
         schema: {
-            $ref: `json/${type}.json`,
+            $ref: `json/${lowercaseType}.json`,
         },
         compact: true,
         disable_collapse: true,
