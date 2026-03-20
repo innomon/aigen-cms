@@ -3,8 +3,15 @@ const apiPrefix = "/api";
 async function tryFetch(cb) {
     const res = await cb();
     const text = await res.text();
-    const  data = text ? JSON.parse(text):  null;
-    return res.ok ? {data} : {error: (data?.title ??"An error has occurred. Please try again.")};
+    let data = null;
+    if (text) {
+        try {
+            data = JSON.parse(text);
+        } catch (e) {
+            data = { title: text };
+        }
+    }
+    return res.ok ? {data} : {error: (data?.title ?? "An error has occurred. Please try again.")};
 }
 
 

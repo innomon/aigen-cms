@@ -31,6 +31,10 @@ func (a *PageApi) Render(w http.ResponseWriter, r *http.Request) {
 
 	html, err := a.pageService.Render(r.Context(), path, strArgs)
 	if err != nil {
+		if path == "/" || path == "" {
+			http.Redirect(w, r, "/admin/list.html", http.StatusFound)
+			return
+		}
 		http.NotFound(w, r)
 		return
 	}

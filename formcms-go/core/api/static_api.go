@@ -22,6 +22,10 @@ func (a *StaticApi) Register(r chi.Router) {
 	sub, _ := fs.Sub(uiAssets, "ui")
 	fileServer := http.FileServer(http.FS(sub))
 
+	r.Get("/admin", func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, "/admin/", http.StatusFound)
+	})
+
 	// Serve all files from root
 	r.Handle("/admin/*", http.StripPrefix("/admin", fileServer))
 	r.Handle("/static/*", http.StripPrefix("/static", fileServer))

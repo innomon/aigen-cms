@@ -24,6 +24,10 @@ func (a *AuthApi) Register(r chi.Router) {
 		r.Post("/login", a.DoLogin)
 		r.With(a.JWTMiddleware).Get("/me", a.GetMe)
 	})
+
+	// Add routes expected by frontend
+	r.With(a.JWTMiddleware).Get("/api/me", a.GetMe)
+	r.Get("/api/logout", a.DoLogout)
 }
 
 type authRequest struct {
@@ -60,7 +64,25 @@ func (a *AuthApi) DoLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	http.SetCookie(w, &http.Cookie{
+		Name:     "token",
+		Value:    token,
+		Path:     "/",
+		HttpOnly: true,
+	})
+
 	json.NewEncoder(w).Encode(map[string]string{"token": token})
+}
+
+func (a *AuthApi) DoLogout(w http.ResponseWriter, r *http.Request) {
+	http.SetCookie(w, &http.Cookie{
+		Name:     "token",
+		Value:    "",
+		Path:     "/",
+		MaxAge:   -1,
+		HttpOnly: true,
+	})
+	w.WriteHeader(http.StatusOK)
 }
 
 func (a *AuthApi) GetMe(w http.ResponseWriter, r *http.Request) {
@@ -75,19 +97,29 @@ func (a *AuthApi) GetMe(w http.ResponseWriter, r *http.Request) {
 
 func (a *AuthApi) JWTMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		tokenString := ""
+
 		authHeader := r.Header.Get("Authorization")
-		if authHeader == "" {
-			http.Error(w, "missing authorization header", http.StatusUnauthorized)
+		if authHeader != "" {
+			parts := strings.Split(authHeader, " ")
+			if len(parts) == 2 && parts[0] == "Bearer" {
+				tokenString = parts[1]
+			}
+		}
+
+		if tokenString == "" {
+			cookie, err := r.Cookie("token")
+			if err == nil {
+				tokenString = cookie.Value
+			}
+		}
+
+		if tokenString == "" {
+			http.Error(w, "missing authorization token", http.StatusUnauthorized)
 			return
 		}
 
-		parts := strings.Split(authHeader, " ")
-		if len(parts) != 2 || parts[0] != "Bearer" {
-			http.Error(w, "invalid authorization header", http.StatusUnauthorized)
-			return
-		}
-
-		userId, role, err := a.authService.ValidateToken(parts[1])
+		userId, role, err := a.authService.ValidateToken(tokenString)
 		if err != nil {
 			http.Error(w, "invalid token", http.StatusUnauthorized)
 			return
