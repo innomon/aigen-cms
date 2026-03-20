@@ -8,7 +8,7 @@ import (
 	"github.com/innomon/agentic/pkg/registry"
 )
 
-func RegisterCMSTools(entityService services.IEntityService, schemaService *services.SchemaService, a2uiService *services.A2UIService) {
+func RegisterCMSTools(entityService IEntityService, schemaService *SchemaService, a2uiService *A2UIService) {
 	registry.RegisterToolHandler("cms_entity_list", func(ctx context.Context, args map[string]any) (any, error) {
 		name, ok := args["name"].(string)
 		if !ok {
@@ -88,7 +88,7 @@ func RegisterCMSTools(entityService services.IEntityService, schemaService *serv
 			children = c
 		}
 
-		comp := services.A2UIComponent{
+		comp := A2UIComponent{
 			ID:         id,
 			Type:       typ,
 			Attributes: attrs,

@@ -1,7 +1,6 @@
 package api
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -9,7 +8,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/formcms/formcms-go/core/services"
 	"google.golang.org/adk/agent"
-	"google.golang.org/adk/session"
+	"google.golang.org/adk/runner"
 	"google.golang.org/genai"
 )
 
@@ -47,9 +46,6 @@ func (a *ChatApi) Message(w http.ResponseWriter, r *http.Request) {
 
 	ctx := r.Context()
 	
-	// Create a new session
-	sess := session.New()
-	
 	// Get Root Agent
 	rootAgent, err := a.chatService.Registry.GetRoot(ctx)
 	if err != nil {
@@ -59,14 +55,32 @@ func (a *ChatApi) Message(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Create user prompt event
-	userEvent := session.NewUserPromptEvent(genai.Text(req.Message))
+	// Create Runner
+	rnr, err := runner.New(runner.Config{
+		AppName:        "AiGenCMS",
+		Agent:          rootAgent,
+		SessionService: a.chatService.SessionService,
+	})
+	if err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(ChatResponse{Error: fmt.Sprintf("failed to create runner: %v", err)})
+		return
+	}
+
+	userContent := &genai.Content{
+		Role: "user",
+		Parts: []*genai.Part{
+			{Text: req.Message},
+		},
+	}
 	
-	// Run the agent
-	ic := agent.NewInvocationContext(ctx, rootAgent, nil, nil, sess, nil, nil, userEvent)
-	
+	// Use a fixed session ID for now, or generate one
+	sessionID := "default-session"
+	userID := "default-user"
+
 	var finalResponse string
-	for evt, err := range rootAgent.Run(ic) {
+	for evt, err := range rnr.Run(ctx, userID, sessionID, userContent, agent.RunConfig{}) {
 		if err != nil {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusInternalServerError)
@@ -74,10 +88,10 @@ func (a *ChatApi) Message(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		if evt.State == session.StateCompleted && evt.Content != nil {
+		if evt.Content != nil {
 			for _, part := range evt.Content.Parts {
-				if txt, ok := part.(genai.Text); ok {
-					finalResponse += string(txt)
+				if part.Text != "" {
+					finalResponse += part.Text
 				}
 			}
 		}

@@ -8,6 +8,7 @@ import (
 
 	"github.com/innomon/agentic/pkg/registry"
 	"google.golang.org/adk/agent"
+	"google.golang.org/adk/model"
 	"google.golang.org/adk/session"
 	"google.golang.org/genai"
 )
@@ -28,15 +29,23 @@ func RegisterRouterAgent() {
 				return func(yield func(*session.Event, error) bool) {
 					content := ic.UserContent()
 					if content == nil || len(content.Parts) == 0 {
-						yield(&session.Event{State: session.StateFailed}, fmt.Errorf("no input provided to router"))
+						yield(&session.Event{
+							LLMResponse: model.LLMResponse{
+								ErrorMessage: "no input provided to router",
+							},
+						}, fmt.Errorf("no input provided to router"))
 						return
 					}
 
 					text := ""
-					if txtPart, ok := content.Parts[0].(genai.Text); ok {
-						text = strings.ToLower(string(txtPart))
+					if content.Parts[0].Text != "" {
+						text = strings.ToLower(content.Parts[0].Text)
 					} else {
-						yield(&session.Event{State: session.StateFailed}, fmt.Errorf("non-text input to router not supported yet"))
+						yield(&session.Event{
+							LLMResponse: model.LLMResponse{
+								ErrorMessage: "non-text input to router not supported yet",
+							},
+						}, fmt.Errorf("non-text input to router not supported yet"))
 						return
 					}
 
@@ -72,11 +81,12 @@ func RegisterRouterAgent() {
 						}
 					} else {
 						yield(&session.Event{
-							State: session.StateCompleted,
-							Content: &genai.Content{
-								Role: "model",
-								Parts: []genai.Part{
-									genai.Text("I'm sorry, I don't have the right sub-agents configured to handle this request."),
+							LLMResponse: model.LLMResponse{
+								Content: &genai.Content{
+									Role: "model",
+									Parts: []*genai.Part{
+										{Text: "I'm sorry, I don't have the right sub-agents configured to handle this request."},
+									},
 								},
 							},
 						}, nil)

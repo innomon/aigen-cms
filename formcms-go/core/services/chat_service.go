@@ -1,20 +1,20 @@
 package services
 
 import (
-	"context"
 	"fmt"
-	"log"
 
 	"github.com/formcms/formcms-go/core/agentic/agents"
 	"github.com/innomon/agentic/pkg/config"
 	"github.com/innomon/agentic/pkg/registry"
+	"google.golang.org/adk/session"
 )
 
 type ChatService struct {
-	Registry      *registry.Registry
-	EntityService IEntityService
-	SchemaService *SchemaService
-	A2UIService   *A2UIService
+	Registry       *registry.Registry
+	EntityService  IEntityService
+	SchemaService  *SchemaService
+	A2UIService    *A2UIService
+	SessionService session.Service
 }
 
 func NewChatService(configPath string, entityService IEntityService, schemaService *SchemaService, a2uiService *A2UIService) (*ChatService, error) {
@@ -32,10 +32,11 @@ func NewChatService(configPath string, entityService IEntityService, schemaServi
 	reg := registry.New(cfg)
 
 	svc := &ChatService{
-		Registry:      reg,
-		EntityService: entityService,
-		SchemaService: schemaService,
-		A2UIService:   a2uiService,
+		Registry:       reg,
+		EntityService:  entityService,
+		SchemaService:  schemaService,
+		A2UIService:    a2uiService,
+		SessionService: session.InMemoryService(),
 	}
 
 	return svc, nil
