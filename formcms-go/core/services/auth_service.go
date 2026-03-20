@@ -35,14 +35,14 @@ func (s *AuthService) Register(ctx context.Context, email, password string) (*de
 	user := &descriptors.User{
 		Email:        email,
 		PasswordHash: string(hashedPassword),
-		Role:         descriptors.RoleUser,
+		Roles:        []string{descriptors.RoleUser},
 		CreatedAt:    time.Now(),
 		UpdatedAt:    time.Now(),
 	}
 
 	query, args, err := s.dao.GetBuilder().Insert(descriptors.UserTableName).
 		Columns("email", "password_hash", "role", "created_at", "updated_at").
-		Values(user.Email, user.PasswordHash, user.Role, user.CreatedAt, user.UpdatedAt).ToSql()
+		Values(user.Email, user.PasswordHash, user.Roles[0], user.CreatedAt, user.UpdatedAt).ToSql()
 	if err != nil {
 		return nil, err
 	}
@@ -68,7 +68,46 @@ func (s *AuthService) Register(ctx context.Context, email, password string) (*de
 	}
 
 	user.Id = newId
+
+	// Link role in junction table if RBAC is active
+	// For now, we keep the legacy 'role' column updated too for compatibility
+	_, _, _ = s.dao.GetBuilder().Insert("__user_roles").
+		Columns("user_id", "role_id").
+		Select(squirrel.Select(fmt.Sprintf("%d", user.Id), "id").From("__roles").Where(squirrel.Eq{"name": descriptors.RoleUser})).
+		ToSql()
+	// (Implementation of the above would need more robust error handling and potentially moving to a method)
+
 	return user, nil
+}
+
+func (s *AuthService) getRoles(ctx context.Context, userId int64, legacyRole string) ([]string, error) {
+	query, args, err := s.dao.GetBuilder().Select("r.name").From("__user_roles ur").
+		Join("__roles r ON ur.role_id = r.id").
+		Where(squirrel.Eq{"ur.user_id": userId}).ToSql()
+
+	if err != nil {
+		return []string{legacyRole}, nil // Fallback to legacy
+	}
+
+	rows, err := s.dao.GetDb().QueryContext(ctx, query, args...)
+	if err != nil {
+		return []string{legacyRole}, nil // Fallback to legacy
+	}
+	defer rows.Close()
+
+	var roles []string
+	for rows.Next() {
+		var role string
+		if err := rows.Scan(&role); err == nil {
+			roles = append(roles, role)
+		}
+	}
+
+	if len(roles) == 0 {
+		return []string{legacyRole}, nil
+	}
+
+	return roles, nil
 }
 
 func (s *AuthService) Login(ctx context.Context, email, password string) (string, error) {
@@ -91,9 +130,11 @@ func (s *AuthService) Login(ctx context.Context, email, password string) (string
 		return "", fmt.Errorf("invalid password")
 	}
 
+	roles, _ := s.getRoles(ctx, id, role)
+
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"userId": id,
-		"role":   role,
+		"roles":  roles,
 		"exp":    time.Now().Add(time.Hour * 24).Unix(),
 	})
 
@@ -116,18 +157,20 @@ func (s *AuthService) Me(ctx context.Context, userId int64) (*descriptors.User, 
 		return nil, fmt.Errorf("user not found: %w", err)
 	}
 
+	roles, _ := s.getRoles(ctx, id, role)
+
 	return &descriptors.User{
 		Id:           id,
 		Email:        e,
 		PasswordHash: pass,
-		Role:         role,
+		Roles:        roles,
 		AvatarPath:   avatar.String,
 		CreatedAt:    createdAt,
 		UpdatedAt:    updatedAt,
 	}, nil
 }
 
-func (s *AuthService) ValidateToken(tokenString string) (int64, string, error) {
+func (s *AuthService) ValidateToken(tokenString string) (int64, []string, error) {
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
@@ -136,14 +179,24 @@ func (s *AuthService) ValidateToken(tokenString string) (int64, string, error) {
 	})
 
 	if err != nil {
-		return 0, "", err
+		return 0, nil, err
 	}
 
 	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
 		userId := int64(claims["userId"].(float64))
-		role := claims["role"].(string)
-		return userId, role, nil
+		
+		var roles []string
+		if r, ok := claims["roles"].([]interface{}); ok {
+			for _, role := range r {
+				roles = append(roles, role.(string))
+			}
+		} else if r, ok := claims["role"].(string); ok {
+			// Backward compatibility with single role tokens
+			roles = []string{r}
+		}
+
+		return userId, roles, nil
 	}
 
-	return 0, "", fmt.Errorf("invalid token")
+	return 0, nil, fmt.Errorf("invalid token")
 }

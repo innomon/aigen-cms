@@ -14,6 +14,7 @@ type Attribute struct {
 	IsDefault   bool                      `json:"isDefault"`
 	Options     string                    `json:"options"`
 	Validation  string                    `json:"validation"`
+	PermLevel   int                       `json:"permLevel"`
 }
 
 func (a *Attribute) ToLoaded(tableName string) LoadedAttribute {

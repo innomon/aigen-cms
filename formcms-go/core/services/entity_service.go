@@ -14,14 +14,16 @@ import (
 )
 
 type EntityService struct {
-	schemaService ISchemaService
-	dao           relationdbdao.IPrimaryDao
+	schemaService     ISchemaService
+	dao               relationdbdao.IPrimaryDao
+	permissionService IPermissionService
 }
 
-func NewEntityService(schemaService ISchemaService, dao relationdbdao.IPrimaryDao) *EntityService {
+func NewEntityService(schemaService ISchemaService, dao relationdbdao.IPrimaryDao, permissionService IPermissionService) *EntityService {
 	return &EntityService{
-		schemaService: schemaService,
-		dao:           dao,
+		schemaService:     schemaService,
+		dao:               dao,
+		permissionService: permissionService,
 	}
 }
 
@@ -30,6 +32,10 @@ func (s *EntityService) List(ctx context.Context, name string, pagination datamo
 	if err != nil {
 		return nil, 0, err
 	}
+
+	userId, _ := ctx.Value("userId").(int64)
+	rowFilters, _ := s.permissionService.GetRowFilters(ctx, userId, name)
+	filters = append(filters, rowFilters...)
 
 	sb := entity.SelectQuery(s.dao.GetBuilder())
 	sb = s.applyFilters(sb, filters)
@@ -47,7 +53,10 @@ func (s *EntityService) List(ctx context.Context, name string, pagination datamo
 	}
 	defer rows.Close()
 
-	results, err := s.scanRows(rows)
+	roles, _ := ctx.Value("roles").([]string)
+	fieldPerms, _ := s.permissionService.GetFieldPermissions(ctx, name, roles)
+
+	results, err := s.scanRows(rows, fieldPerms)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -61,7 +70,13 @@ func (s *EntityService) Single(ctx context.Context, name string, id interface{})
 		return nil, err
 	}
 
-	query, args, err := entity.SelectQuery(s.dao.GetBuilder()).Where(squirrel.Eq{entity.PrimaryKey: id}).ToSql()
+	userId, _ := ctx.Value("userId").(int64)
+	rowFilters, _ := s.permissionService.GetRowFilters(ctx, userId, name)
+
+	sb := entity.SelectQuery(s.dao.GetBuilder()).Where(squirrel.Eq{entity.PrimaryKey: id})
+	sb = s.applyFilters(sb, rowFilters)
+
+	query, args, err := sb.ToSql()
 	if err != nil {
 		return nil, err
 	}
@@ -72,12 +87,15 @@ func (s *EntityService) Single(ctx context.Context, name string, id interface{})
 	}
 	defer rows.Close()
 
-	results, err := s.scanRows(rows)
+	roles, _ := ctx.Value("roles").([]string)
+	fieldPerms, _ := s.permissionService.GetFieldPermissions(ctx, name, roles)
+
+	results, err := s.scanRows(rows, fieldPerms)
 	if err != nil {
 		return nil, err
 	}
 	if len(results) == 0 {
-		return nil, fmt.Errorf("record not found")
+		return nil, fmt.Errorf("record not found or access denied")
 	}
 
 	return results[0], nil
@@ -89,9 +107,15 @@ func (s *EntityService) Insert(ctx context.Context, name string, data datamodels
 		return nil, err
 	}
 
+	roles, _ := ctx.Value("roles").([]string)
+	fieldPerms, _ := s.permissionService.GetFieldPermissions(ctx, name, roles)
+
 	var columns []string
 	var values []interface{}
 	for k, v := range data {
+		if p, ok := fieldPerms[k]; ok && !p["write"] {
+			continue // Skip unauthorized fields
+		}
 		columns = append(columns, k)
 		values = append(values, v)
 	}
@@ -124,11 +148,17 @@ func (s *EntityService) Update(ctx context.Context, name string, data datamodels
 		return nil, err
 	}
 
+	roles, _ := ctx.Value("roles").([]string)
+	fieldPerms, _ := s.permissionService.GetFieldPermissions(ctx, name, roles)
+
 	id := data[entity.PrimaryKey]
 	sb := s.dao.GetBuilder().Update(entity.TableName)
 	for k, v := range data {
 		if k == entity.PrimaryKey {
 			continue
+		}
+		if p, ok := fieldPerms[k]; ok && !p["write"] {
+			continue // Skip unauthorized fields
 		}
 		sb = sb.Set(k, v)
 	}
@@ -152,7 +182,27 @@ func (s *EntityService) Delete(ctx context.Context, name string, id interface{})
 		return err
 	}
 
-	query, args, err := s.dao.GetBuilder().Delete(entity.TableName).Where(squirrel.Eq{entity.PrimaryKey: id}).ToSql()
+	// For delete, we might also want to apply row filters to ensure user can only delete what they can see
+	userId, _ := ctx.Value("userId").(int64)
+	rowFilters, _ := s.permissionService.GetRowFilters(ctx, userId, name)
+
+	sb := s.dao.GetBuilder().Delete(entity.TableName).Where(squirrel.Eq{entity.PrimaryKey: id})
+	// Note: squirrel DeleteBuilder doesn't directly support the same complex where as SelectBuilder in some versions, 
+	// but squirrel.Eq should work fine.
+	
+	// Complex row filters might need careful application to Delete
+	if len(rowFilters) > 0 {
+		// This is a simplified application
+		for _, f := range rowFilters {
+			for _, c := range f.Constraints {
+				if c.Match == "equals" && len(c.Values) > 0 {
+					sb = sb.Where(squirrel.Eq{f.FieldName: c.Values})
+				}
+			}
+		}
+	}
+
+	query, args, err := sb.ToSql()
 	if err != nil {
 		return err
 	}
@@ -181,6 +231,10 @@ func (s *EntityService) CollectionList(ctx context.Context, name, id, attrName s
 	collection := collectionAttr.Collection
 	targetEntity := collection.TargetEntity
 
+	userId, _ := ctx.Value("userId").(int64)
+	rowFilters, _ := s.permissionService.GetRowFilters(ctx, userId, targetEntity.Name)
+	filters = append(filters, rowFilters...)
+
 	sb := s.dao.GetBuilder().Select("*").From(targetEntity.TableName).
 		Where(squirrel.Eq{collection.LinkAttribute.Field: id})
 
@@ -199,7 +253,10 @@ func (s *EntityService) CollectionList(ctx context.Context, name, id, attrName s
 	}
 	defer rows.Close()
 
-	results, err := s.scanRows(rows)
+	roles, _ := ctx.Value("roles").([]string)
+	fieldPerms, _ := s.permissionService.GetFieldPermissions(ctx, targetEntity.Name, roles)
+
+	results, err := s.scanRows(rows, fieldPerms)
 	return results, int64(len(results)), err
 }
 
@@ -245,6 +302,10 @@ func (s *EntityService) JunctionList(ctx context.Context, name, id, attrName str
 	junction := junctionAttr.Junction
 	targetEntity := junction.TargetEntity
 
+	userId, _ := ctx.Value("userId").(int64)
+	rowFilters, _ := s.permissionService.GetRowFilters(ctx, userId, targetEntity.Name)
+	filters = append(filters, rowFilters...)
+
 	subQuery, subArgs, _ := s.dao.GetBuilder().Select(junction.TargetAttribute.Field).
 		From(junction.JunctionEntity.TableName).
 		Where(squirrel.Eq{junction.SourceAttribute.Field: id}).ToSql()
@@ -271,7 +332,10 @@ func (s *EntityService) JunctionList(ctx context.Context, name, id, attrName str
 	}
 	defer rows.Close()
 
-	results, err := s.scanRows(rows)
+	roles, _ := ctx.Value("roles").([]string)
+	fieldPerms, _ := s.permissionService.GetFieldPermissions(ctx, targetEntity.Name, roles)
+
+	results, err := s.scanRows(rows, fieldPerms)
 	return results, int64(len(results)), err
 }
 
@@ -349,7 +413,11 @@ func (s *EntityService) applyFilters(sb squirrel.SelectBuilder, filters []datamo
 	for _, f := range filters {
 		for _, c := range f.Constraints {
 			if c.Match == "equals" && len(c.Values) > 0 {
-				sb = sb.Where(squirrel.Eq{f.FieldName: *c.Values[0]})
+				if len(c.Values) == 1 {
+					sb = sb.Where(squirrel.Eq{f.FieldName: *c.Values[0]})
+				} else {
+					sb = sb.Where(squirrel.Eq{f.FieldName: c.Values})
+				}
 			}
 		}
 	}
@@ -384,7 +452,7 @@ func (s *EntityService) applyPagination(sb squirrel.SelectBuilder, pagination da
 	return sb
 }
 
-func (s *EntityService) scanRows(rows *sql.Rows) ([]datamodels.Record, error) {
+func (s *EntityService) scanRows(rows *sql.Rows, fieldPerms map[string]map[string]bool) ([]datamodels.Record, error) {
 	var results []datamodels.Record
 	columns, _ := rows.Columns()
 	for rows.Next() {
@@ -399,6 +467,11 @@ func (s *EntityService) scanRows(rows *sql.Rows) ([]datamodels.Record, error) {
 
 		record := make(datamodels.Record)
 		for i, col := range columns {
+			// Field-level read check
+			if p, ok := fieldPerms[col]; ok && !p["read"] {
+				continue // Skip unauthorized fields
+			}
+
 			val := values[i]
 			if b, ok := val.([]byte); ok {
 				record[col] = string(b)

@@ -60,7 +60,7 @@ type IAuthService interface {
 	Register(ctx context.Context, email, password string) (*descriptors.User, error)
 	Login(ctx context.Context, email, password string) (string, error)
 	Me(ctx context.Context, userId int64) (*descriptors.User, error)
-	ValidateToken(token string) (int64, string, error)
+	ValidateToken(token string) (int64, []string, error)
 }
 
 type INotificationService interface {
@@ -78,4 +78,10 @@ type IAuditService interface {
 
 type IPageService interface {
 	Render(ctx context.Context, path string, strArgs datamodels.StrArgs) (string, error)
+}
+
+type IPermissionService interface {
+	HasAccess(ctx context.Context, userId int64, roles []string, entityName, action string) (bool, error)
+	GetRowFilters(ctx context.Context, userId int64, entityName string) ([]datamodels.Filter, error)
+	GetFieldPermissions(ctx context.Context, entityName string, roles []string) (map[string]map[string]bool, error)
 }

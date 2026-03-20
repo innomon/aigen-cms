@@ -12,18 +12,46 @@ import (
 
 type SchemaApi struct {
 	schemaService services.ISchemaService
+	authApi       *AuthApi
 }
 
-func NewSchemaApi(schemaService services.ISchemaService) *SchemaApi {
-	return &SchemaApi{schemaService: schemaService}
+func NewSchemaApi(schemaService services.ISchemaService, authApi *AuthApi) *SchemaApi {
+	return &SchemaApi{
+		schemaService: schemaService,
+		authApi:       authApi,
+	}
 }
 
 func (a *SchemaApi) Register(r chi.Router) {
 	r.Route("/api/schemas", func(r chi.Router) {
+		r.Use(a.authApi.JWTMiddleware)
+
 		r.Get("/", a.GetAll)
-		r.Post("/", a.Save)
 		r.Get("/{schemaId}", a.GetBySchemaId)
-		r.Delete("/{schemaId}", a.Delete)
+
+		r.Group(func(r chi.Router) {
+			r.Use(a.AdminOnlyMiddleware)
+			r.Post("/", a.Save)
+			r.Delete("/{schemaId}", a.Delete)
+		})
+	})
+}
+
+func (a *SchemaApi) AdminOnlyMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		roles, _ := r.Context().Value("roles").([]string)
+		isAdmin := false
+		for _, role := range roles {
+			if role == descriptors.RoleSa || role == descriptors.RoleAdmin {
+				isAdmin = true
+				break
+			}
+		}
+		if !isAdmin {
+			http.Error(w, "forbidden", http.StatusForbidden)
+			return
+		}
+		next.ServeHTTP(w, r)
 	})
 }
 

@@ -74,6 +74,7 @@ func main() {
 	fileStore := filestore.NewLocalFileStore(systemSettings.LocalFileStoreOptions.PathPrefix, systemSettings.LocalFileStoreOptions.UrlPrefix)
 
 	schemaService := services.NewSchemaService(dao)
+	permissionService := services.NewPermissionService(dao, schemaService)
 
 	enabledApps, err := apps.LoadAppsConfig()
 	if err != nil {
@@ -87,7 +88,7 @@ func main() {
 		}
 	}
 
-	entityService := services.NewEntityService(schemaService, dao)
+	entityService := services.NewEntityService(schemaService, dao, permissionService)
 
 	for _, appName := range enabledApps {
 		log.Printf("Setting up test data for app: %s", appName)
@@ -106,14 +107,15 @@ func main() {
 	pageService := services.NewPageService(schemaService, graphqlService)
 
 	// Initialize APIs
-	schemaApi := api.NewSchemaApi(schemaService)
-	entityApi := api.NewEntityApi(entityService)
+	authApi := api.NewAuthApi(authService, permissionService)
+	rbacApi := api.NewRBACApi(entityService, authApi)
+	schemaApi := api.NewSchemaApi(schemaService, authApi)
+	entityApi := api.NewEntityApi(entityService, authApi)
 	graphqlApi := api.NewGraphQLApi(graphqlService)
 	queryApi := api.NewQueryApi(graphqlService)
 	assetApi := api.NewAssetApi(assetService)
 	engagementApi := api.NewEngagementApi(engagementService)
 	commentApi := api.NewCommentApi(commentService)
-	authApi := api.NewAuthApi(authService)
 	notificationApi := api.NewNotificationApi(notificationService, authApi)
 	auditApi := api.NewAuditApi(auditService, authApi)
 	staticApi := api.NewStaticApi()
@@ -136,6 +138,7 @@ func main() {
 	engagementApi.Register(r)
 	commentApi.Register(r)
 	authApi.Register(r)
+	rbacApi.Register(r)
 	notificationApi.Register(r)
 	auditApi.Register(r)
 	staticApi.Register(r)

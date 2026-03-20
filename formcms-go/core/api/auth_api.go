@@ -11,11 +11,15 @@ import (
 )
 
 type AuthApi struct {
-	authService services.IAuthService
+	authService       services.IAuthService
+	permissionService services.IPermissionService
 }
 
-func NewAuthApi(authService services.IAuthService) *AuthApi {
-	return &AuthApi{authService: authService}
+func NewAuthApi(authService services.IAuthService, permissionService services.IPermissionService) *AuthApi {
+	return &AuthApi{
+		authService:       authService,
+		permissionService: permissionService,
+	}
 }
 
 func (a *AuthApi) Register(r chi.Router) {
@@ -119,14 +123,43 @@ func (a *AuthApi) JWTMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		userId, role, err := a.authService.ValidateToken(tokenString)
+		userId, roles, err := a.authService.ValidateToken(tokenString)
 		if err != nil {
 			http.Error(w, "invalid token", http.StatusUnauthorized)
 			return
 		}
 
 		ctx := context.WithValue(r.Context(), "userId", userId)
-		ctx = context.WithValue(ctx, "role", role)
+		ctx = context.WithValue(ctx, "roles", roles)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
+}
+
+func (a *AuthApi) RBACMiddleware(action string) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			userId, _ := r.Context().Value("userId").(int64)
+			roles, _ := r.Context().Value("roles").([]string)
+			entityName := chi.URLParam(r, "name")
+
+			if entityName == "" {
+				// If not entity-based route, maybe we can't check here
+				next.ServeHTTP(w, r)
+				return
+			}
+
+			hasAccess, err := a.permissionService.HasAccess(r.Context(), userId, roles, entityName, action)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+
+			if !hasAccess {
+				http.Error(w, "forbidden", http.StatusForbidden)
+				return
+			}
+
+			next.ServeHTTP(w, r)
+		})
+	}
 }

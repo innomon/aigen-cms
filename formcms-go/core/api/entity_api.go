@@ -11,27 +11,33 @@ import (
 
 type EntityApi struct {
 	entityService services.IEntityService
+	authApi       *AuthApi
 }
 
-func NewEntityApi(entityService services.IEntityService) *EntityApi {
-	return &EntityApi{entityService: entityService}
+func NewEntityApi(entityService services.IEntityService, authApi *AuthApi) *EntityApi {
+	return &EntityApi{
+		entityService: entityService,
+		authApi:       authApi,
+	}
 }
 
 func (a *EntityApi) Register(r chi.Router) {
 	r.Route("/api/entities/{name}", func(r chi.Router) {
-		r.Get("/", a.List)
-		r.Post("/", a.Create)
-		r.Get("/{id}", a.Get)
-		r.Put("/", a.Update)
-		r.Delete("/{id}", a.Delete)
+		r.Use(a.authApi.JWTMiddleware)
+
+		r.With(a.authApi.RBACMiddleware("read")).Get("/", a.List)
+		r.With(a.authApi.RBACMiddleware("create")).Post("/", a.Create)
+		r.With(a.authApi.RBACMiddleware("read")).Get("/{id}", a.Get)
+		r.With(a.authApi.RBACMiddleware("write")).Put("/", a.Update)
+		r.With(a.authApi.RBACMiddleware("delete")).Delete("/{id}", a.Delete)
 
 		r.Route("/{id}/{attr}", func(r chi.Router) {
-			r.Get("/collection", a.CollectionList)
-			r.Post("/collection", a.CollectionInsert)
+			r.With(a.authApi.RBACMiddleware("read")).Get("/collection", a.CollectionList)
+			r.With(a.authApi.RBACMiddleware("write")).Post("/collection", a.CollectionInsert)
 
-			r.Get("/junction", a.JunctionList)
-			r.Post("/junction", a.JunctionSave)
-			r.Delete("/junction", a.JunctionDelete)
+			r.With(a.authApi.RBACMiddleware("read")).Get("/junction", a.JunctionList)
+			r.With(a.authApi.RBACMiddleware("write")).Post("/junction", a.JunctionSave)
+			r.With(a.authApi.RBACMiddleware("write")).Delete("/junction", a.JunctionDelete)
 		})
 	})
 }

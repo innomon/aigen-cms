@@ -66,8 +66,15 @@ func (a *AuditApi) Get(w http.ResponseWriter, r *http.Request) {
 
 func (a *AuditApi) AdminOnlyMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		role := fmt.Sprintf("%v", r.Context().Value("role"))
-		if role != descriptors.RoleSa && role != descriptors.RoleAdmin {
+		roles, _ := r.Context().Value("roles").([]string)
+		isAdmin := false
+		for _, role := range roles {
+			if role == descriptors.RoleSa || role == descriptors.RoleAdmin {
+				isAdmin = true
+				break
+			}
+		}
+		if !isAdmin {
 			http.Error(w, "forbidden", http.StatusForbidden)
 			return
 		}
