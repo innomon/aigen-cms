@@ -15,6 +15,7 @@ type IReplicaDao interface {
 	CastDate(field string) string
 	GetBuilder() squirrel.StatementBuilderType
 	GetDb() *sql.DB
+	Ping(ctx context.Context) error
 	Close() error
 }
 

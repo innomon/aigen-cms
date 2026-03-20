@@ -28,10 +28,10 @@
 ### Phase 1: Core Framework & Database Abstraction
 - [x] Initialize Go module and project structure
 - [x] Define core data structures (`Entity`, `Attribute`, `Settings`)
-- [/] Implement database abstraction layer (`PrimaryDao`, `ReplicaDao`) (Partially: Interfaces and PostgresDao base implemented)
+- [x] Implement database abstraction layer (`PrimaryDao`, `ReplicaDao`) (Postgres and SQLite implemented)
 - [x] Setup `squirrel` for dynamic SQL building
-- [/] Implement dynamic table creation and migration (`MigrateTable`) (Partially: CreateTable, AddColumns in PostgresDao)
-- [ ] Implement database connection pooling and health checks
+- [x] Implement dynamic table creation and migration (`MigrateTable`)
+- [x] Implement database connection pooling and health checks
 
 ### Phase 2: CMS Core APIs
 - [ ] Implement REST API endpoints for schema management (`/api/schemas`)

@@ -22,6 +22,10 @@ func (d *Dao) GetBuilder() squirrel.StatementBuilderType {
 	return d.builder
 }
 
+func (d *Dao) Ping(ctx context.Context) error {
+	return d.db.PingContext(ctx)
+}
+
 func (d *Dao) Close() error {
 	return d.db.Close()
 }
@@ -47,7 +51,11 @@ func (d *Dao) MaxId(ctx context.Context, tableName string, fieldName string) (in
 }
 
 func (d *Dao) FetchValues(ctx context.Context, tableName string, keyConditions datamodels.Record, inField string, inValues []interface{}, valueField string) (map[string]interface{}, error) {
-	sb := d.builder.Select(valueField).From(tableName)
+	idField := "0"
+	if inField != "" {
+		idField = inField
+	}
+	sb := d.builder.Select(idField, valueField).From(tableName)
 	for k, v := range keyConditions {
 		sb = sb.Where(squirrel.Eq{k: v})
 	}
@@ -67,8 +75,13 @@ func (d *Dao) FetchValues(ctx context.Context, tableName string, keyConditions d
 	defer rows.Close()
 
 	result := make(map[string]interface{})
-	// This is a bit simplified, usually FetchValues returns a map from key to value.
-	// The C# implementation returns Dictionary<string, T>.
-	// Let's refine this based on actual usage later.
+	for rows.Next() {
+		var key interface{}
+		var val interface{}
+		if err := rows.Scan(&key, &val); err != nil {
+			return nil, err
+		}
+		result[fmt.Sprintf("%v", key)] = val
+	}
 	return result, nil
 }
