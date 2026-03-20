@@ -2,7 +2,7 @@ package descriptors
 
 import (
 	"encoding/json"
-	"fmt"
+	"reflect"
 	"time"
 
 	"github.com/mitchellh/mapstructure"
@@ -41,26 +41,25 @@ type Schema struct {
 func RecordToSchema(record map[string]interface{}) (*Schema, error) {
 	var s Schema
 	config := &mapstructure.DecoderConfig{
-		Metadata: nil,
-		Result:   &s,
-		TagName:  "mapstructure",
+		Metadata:         nil,
+		Result:           &s,
+		TagName:          "mapstructure",
+		WeaklyTypedInput: true,
 		DecodeHook: mapstructure.ComposeDecodeHookFunc(
-			func(f interface{}, t interface{}) (interface{}, error) {
-				if f == nil {
-					return nil, nil
+			mapstructure.StringToTimeHookFunc(time.RFC3339),
+			func(f reflect.Type, t reflect.Type, data interface{}) (interface{}, error) {
+				if f.Kind() != reflect.String {
+					return data, nil
 				}
-				// Handle string to json.RawMessage or struct conversion for Settings
-				if str, ok := f.(string); ok {
-					// Check if target is *SchemaSettings
-					if fmt.Sprintf("%T", t) == "*descriptors.SchemaSettings" {
-						var settings SchemaSettings
-						if err := json.Unmarshal([]byte(str), &settings); err != nil {
-							return nil, err
-						}
-						return &settings, nil
-					}
+				if t != reflect.TypeOf(&SchemaSettings{}) {
+					return data, nil
 				}
-				return f, nil
+
+				var settings SchemaSettings
+				if err := json.Unmarshal([]byte(data.(string)), &settings); err != nil {
+					return nil, err
+				}
+				return &settings, nil
 			},
 		),
 	}

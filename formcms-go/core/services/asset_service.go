@@ -20,6 +20,8 @@ import (
 	"github.com/formcms/formcms-go/core/descriptors"
 	"github.com/formcms/formcms-go/infrastructure/filestore"
 	"github.com/formcms/formcms-go/infrastructure/relationdbdao"
+	"github.com/formcms/formcms-go/utils/datamodels"
+	gonanoid "github.com/matoous/go-nanoid/v2"
 )
 
 const UploadSessionTableName = "__uploadSessions"
@@ -158,9 +160,13 @@ func (s *AssetService) Save(ctx context.Context, asset *descriptors.Asset) (*des
 	}
 
 	var newId int64
-	if s.dao.GetBuilder().PlaceholderFormat(squirrel.Dollar) == squirrel.Dollar {
+	// Fix: avoid comparing s.dao.GetBuilder().PlaceholderFormat(squirrel.Dollar) == squirrel.Dollar
+	// Just use a simpler check or rely on the SQL string returned by squirrel.
+	if strings.Contains(query, "$1") {
+		// Postgres
 		err = s.dao.GetDb().QueryRowContext(ctx, query+" RETURNING id", args...).Scan(&newId)
 	} else {
+		// SQLite
 		res, err := s.dao.GetDb().ExecContext(ctx, query, args...)
 		if err != nil {
 			return nil, err

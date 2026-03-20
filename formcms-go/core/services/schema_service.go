@@ -4,12 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/Masterminds/squirrel"
 	"github.com/formcms/formcms-go/core/descriptors"
 	"github.com/formcms/formcms-go/infrastructure/relationdbdao"
-	"github.com/formcms/formcms-go/utils/datamodels"
 	gonanoid "github.com/matoous/go-nanoid/v2"
 )
 
@@ -50,28 +50,8 @@ func (s *SchemaService) All(ctx context.Context, schemaType *descriptors.SchemaT
 	defer rows.Close()
 
 	var results []*descriptors.Schema
-	columns, _ := rows.Columns()
 	for rows.Next() {
-		values := make([]interface{}, len(columns))
-		valuePtrs := make([]interface{}, len(columns))
-		for i := range columns {
-			valuePtrs[i] = &values[i]
-		}
-		if err := rows.Scan(valuePtrs...); err != nil {
-			return nil, err
-		}
-
-		record := make(map[string]interface{})
-		for i, col := range columns {
-			val := values[i]
-			if b, ok := val.([]byte); ok {
-				record[col] = string(b)
-			} else {
-				record[col] = val
-			}
-		}
-
-		schema, err := descriptors.RecordToSchema(record)
+		schema, err := s.scanSchema(rows)
 		if err != nil {
 			return nil, err
 		}
@@ -87,8 +67,15 @@ func (s *SchemaService) ById(ctx context.Context, id int64) (*descriptors.Schema
 		return nil, err
 	}
 
-	row := s.dao.GetDb().QueryRowContext(ctx, query, args...)
-	return s.rowToSchema(row)
+	rows, err := s.dao.GetDb().QueryContext(ctx, query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	if !rows.Next() {
+		return nil, nil
+	}
+	return s.scanSchema(rows)
 }
 
 func (s *SchemaService) BySchemaId(ctx context.Context, schemaId string) (*descriptors.Schema, error) {
@@ -99,8 +86,15 @@ func (s *SchemaService) BySchemaId(ctx context.Context, schemaId string) (*descr
 		return nil, err
 	}
 
-	row := s.dao.GetDb().QueryRowContext(ctx, query, args...)
-	return s.rowToSchema(row)
+	rows, err := s.dao.GetDb().QueryContext(ctx, query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	if !rows.Next() {
+		return nil, nil
+	}
+	return s.scanSchema(rows)
 }
 
 func (s *SchemaService) ByNameOrDefault(ctx context.Context, name string, schemaType descriptors.SchemaType, status *descriptors.PublicationStatus) (*descriptors.Schema, error) {
@@ -118,8 +112,42 @@ func (s *SchemaService) ByNameOrDefault(ctx context.Context, name string, schema
 		return nil, err
 	}
 
-	row := s.dao.GetDb().QueryRowContext(ctx, query, args...)
-	return s.rowToSchema(row)
+	rows, err := s.dao.GetDb().QueryContext(ctx, query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	if !rows.Next() {
+		return nil, nil
+	}
+	return s.scanSchema(rows)
+}
+
+func (s *SchemaService) ByStartsOrDefault(ctx context.Context, name string, schemaType descriptors.SchemaType, status *descriptors.PublicationStatus) (*descriptors.Schema, error) {
+	sb := s.dao.GetBuilder().Select("*").From(SchemaTableName).
+		Where(squirrel.Like{"name": name + "%"}).
+		Where(squirrel.Eq{"type": schemaType, "deleted": false})
+
+	if status != nil {
+		sb = sb.Where(squirrel.Eq{"publication_status": *status})
+	} else {
+		sb = sb.Where(squirrel.Eq{"is_latest": true})
+	}
+
+	query, args, err := sb.OrderBy("id DESC").Limit(1).ToSql()
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := s.dao.GetDb().QueryContext(ctx, query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	if !rows.Next() {
+		return nil, nil
+	}
+	return s.scanSchema(rows)
 }
 
 func (s *SchemaService) LoadEntity(ctx context.Context, name string) (*descriptors.Entity, error) {
@@ -158,23 +186,24 @@ func (s *SchemaService) loadLoadedEntityInternal(ctx context.Context, name strin
 }
 
 func (s *SchemaService) loadAttributes(ctx context.Context, le *descriptors.LoadedEntity, processed map[string]*descriptors.LoadedEntity) error {
-	for i := range le.Attributes {
-		attr := &le.Attributes[i]
+	for i := range le.LoadedAttributes {
+		attr := &le.LoadedAttributes[i]
 		var err error
 		switch attr.DataType {
-		case descriptors.Lookup:
+		case descriptors.DataTypeLookup:
 			err = s.loadLookup(ctx, attr, processed)
-		case descriptors.Junction:
+		case descriptors.DataTypeJunction:
 			err = s.loadJunction(ctx, le, attr, processed)
-		case descriptors.Collection:
+		case descriptors.DataTypeCollection:
 			err = s.loadCollection(ctx, le, attr, processed)
 		}
 		if err != nil {
 			return err
 		}
 	}
-	// Re-assign special attributes to point to the instances in the Attributes slice
-	for _, attr := range le.Attributes {
+	// Re-assign special attributes to point to the instances in the LoadedAttributes slice
+	for i := range le.LoadedAttributes {
+		attr := le.LoadedAttributes[i]
 		if attr.Field == le.PrimaryKey {
 			le.PrimaryKeyAttribute = attr
 		}
@@ -192,7 +221,6 @@ func (s *SchemaService) loadAttributes(ctx context.Context, le *descriptors.Load
 }
 
 func (s *SchemaService) loadLookup(ctx context.Context, attr *descriptors.LoadedAttribute, processed map[string]*descriptors.LoadedEntity) error {
-	// Options for lookup is just the target entity name
 	targetName := attr.Options
 	target, err := s.loadLoadedEntityInternal(ctx, targetName, processed)
 	if err != nil {
@@ -203,7 +231,6 @@ func (s *SchemaService) loadLookup(ctx context.Context, attr *descriptors.Loaded
 }
 
 func (s *SchemaService) loadJunction(ctx context.Context, sourceLe *descriptors.LoadedEntity, attr *descriptors.LoadedAttribute, processed map[string]*descriptors.LoadedEntity) error {
-	// Options for junction: "junction_table|target_entity|source_field|target_field"
 	parts := strings.Split(attr.Options, "|")
 	if len(parts) != 4 {
 		return fmt.Errorf("invalid junction options: %s", attr.Options)
@@ -215,11 +242,11 @@ func (s *SchemaService) loadJunction(ctx context.Context, sourceLe *descriptors.
 		return err
 	}
 
-	// JunctionEntity is dynamically created, usually not a full entity in schemas
-	// But it needs to be a LoadedEntity for DB operations
 	junctionLe := &descriptors.LoadedEntity{
-		TableName: junctionTableName,
-		Name:      junctionTableName,
+		Entity: descriptors.Entity{
+			TableName: junctionTableName,
+			Name:      junctionTableName,
+		},
 	}
 
 	attr.Junction = &descriptors.Junction{
@@ -233,7 +260,6 @@ func (s *SchemaService) loadJunction(ctx context.Context, sourceLe *descriptors.
 }
 
 func (s *SchemaService) loadCollection(ctx context.Context, sourceLe *descriptors.LoadedEntity, attr *descriptors.LoadedAttribute, processed map[string]*descriptors.LoadedEntity) error {
-	// Options for collection: "target_entity|link_field"
 	parts := strings.Split(attr.Options, "|")
 	if len(parts) != 2 {
 		return fmt.Errorf("invalid collection options: %s", attr.Options)
@@ -246,9 +272,9 @@ func (s *SchemaService) loadCollection(ctx context.Context, sourceLe *descriptor
 	}
 
 	var linkAttr *descriptors.LoadedAttribute
-	for i := range targetLe.Attributes {
-		if targetLe.Attributes[i].Field == linkFieldName {
-			linkAttr = &targetLe.Attributes[i]
+	for i := range targetLe.LoadedAttributes {
+		if targetLe.LoadedAttributes[i].Field == linkFieldName {
+			linkAttr = &targetLe.LoadedAttributes[i]
 			break
 		}
 	}
@@ -275,7 +301,6 @@ func (s *SchemaService) Save(ctx context.Context, schema *descriptors.Schema, as
 	schema.IsLatest = true
 	schema.CreatedAt = time.Now()
 
-	// 1. Reset old latest
 	updateQuery, updateArgs, err := s.dao.GetBuilder().Update(SchemaTableName).
 		Set("is_latest", false).
 		Where(squirrel.Eq{"schema_id": schema.SchemaId, "is_latest": true}).ToSql()
@@ -293,7 +318,6 @@ func (s *SchemaService) Save(ctx context.Context, schema *descriptors.Schema, as
 		return nil, err
 	}
 
-	// 2. If asPublished, reset old published
 	if asPublished {
 		pubQuery, pubArgs, err := s.dao.GetBuilder().Update(SchemaTableName).
 			Set("publication_status", descriptors.Draft).
@@ -306,7 +330,6 @@ func (s *SchemaService) Save(ctx context.Context, schema *descriptors.Schema, as
 		}
 	}
 
-	// 3. Insert new version
 	settingsJSON, _ := json.Marshal(schema.Settings)
 	insertQuery, insertArgs, err := s.dao.GetBuilder().Insert(SchemaTableName).
 		Columns("schema_id", "name", "type", "settings", "description", "is_latest", "publication_status", "created_at", "created_by", "deleted").
@@ -317,11 +340,9 @@ func (s *SchemaService) Save(ctx context.Context, schema *descriptors.Schema, as
 	}
 
 	var newId int64
-	if s.dao.GetBuilder().PlaceholderFormat(squirrel.Dollar) == squirrel.Dollar {
-		// Postgres
+	if strings.Contains(insertQuery, "$1") {
 		err = tx.QueryRowContext(ctx, insertQuery+" RETURNING id", insertArgs...).Scan(&newId)
 	} else {
-		// SQLite
 		res, err := tx.ExecContext(ctx, insertQuery, insertArgs...)
 		if err != nil {
 			return nil, err
@@ -351,11 +372,30 @@ func (s *SchemaService) Delete(ctx context.Context, schemaId string) error {
 	return err
 }
 
-func (s *SchemaService) rowToSchema(row *sql.Row) (*descriptors.Schema, error) {
-	// This is tricky because we don't know the columns.
-	// For simplicity, let's assume we know them or use a more robust way.
-	// In a real app, I'd use a library or a helper that handles sql.Row to map.
-	// Given the dynamic nature, I'll skip the detailed implementation of rowToSchema
-	// and suggest using a helper that scans into a map first.
-	return nil, fmt.Errorf("rowToSchema not fully implemented")
+func (s *SchemaService) scanSchema(scanner interface {
+	Scan(dest ...interface{}) error
+	Columns() ([]string, error)
+}) (*descriptors.Schema, error) {
+	cols, _ := scanner.Columns()
+	values := make([]interface{}, len(cols))
+	valuePtrs := make([]interface{}, len(cols))
+	for i := range cols {
+		valuePtrs[i] = &values[i]
+	}
+
+	if err := scanner.Scan(valuePtrs...); err != nil {
+		return nil, err
+	}
+
+	record := make(map[string]interface{})
+	for i, col := range cols {
+		val := values[i]
+		if b, ok := val.([]byte); ok {
+			record[col] = string(b)
+		} else {
+			record[col] = val
+		}
+	}
+
+	return descriptors.RecordToSchema(record)
 }

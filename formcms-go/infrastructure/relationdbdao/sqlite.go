@@ -8,7 +8,7 @@ import (
 
 	"github.com/Masterminds/squirrel"
 	"github.com/formcms/formcms-go/utils/datamodels"
-	_ "github.com/mattn/go-sqlite3"
+	_ "modernc.org/sqlite"
 )
 
 type SqliteDao struct {
@@ -16,7 +16,7 @@ type SqliteDao struct {
 }
 
 func NewSqliteDao(connectionString string) (*SqliteDao, error) {
-	db, err := sql.Open("sqlite3", connectionString)
+	db, err := sql.Open("sqlite", connectionString)
 	if err != nil {
 		return nil, err
 	}
@@ -97,7 +97,6 @@ func (d *SqliteDao) AddColumns(ctx context.Context, table string, cols []datamod
 }
 
 func (d *SqliteDao) CreateForeignKey(ctx context.Context, table, col, refTable, refCol string) error {
-	// SQLite doesn't support adding foreign keys via ALTER TABLE
 	return nil
 }
 
@@ -221,12 +220,7 @@ func (d *SqliteDao) Increase(ctx context.Context, tableName string, keyCondition
 
 	var result int64
 	err := d.db.QueryRowContext(ctx, sqlStr, args...).Scan(&result)
-	if err != nil {
-		// If RETURNING is not supported in older sqlite versions, we might need a fallback, 
-		// but modernc or mattn usually support it now.
-		return 0, err
-	}
-	return result, nil
+	return result, err
 }
 
 func (d *SqliteDao) FetchValues(ctx context.Context, tableName string, keyConditions datamodels.Record, inField string, inValues []interface{}, valueField string) (map[string]interface{}, error) {

@@ -2,10 +2,13 @@ package services
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
+	"strings"
 	"strconv"
 
 	"github.com/Masterminds/squirrel"
+	"github.com/formcms/formcms-go/core/descriptors"
 	"github.com/formcms/formcms-go/infrastructure/relationdbdao"
 	"github.com/formcms/formcms-go/utils/datamodels"
 )
@@ -49,7 +52,6 @@ func (s *EntityService) List(ctx context.Context, name string, pagination datamo
 		return nil, 0, err
 	}
 
-	// TODO: Get total count
 	return results, int64(len(results)), nil
 }
 
@@ -99,7 +101,7 @@ func (s *EntityService) Insert(ctx context.Context, name string, data datamodels
 		return nil, err
 	}
 
-	if s.dao.GetBuilder().PlaceholderFormat(squirrel.Dollar) == squirrel.Dollar {
+	if strings.Contains(query, "$1") {
 		var newId interface{}
 		err = s.dao.GetDb().QueryRowContext(ctx, query+" RETURNING "+entity.PrimaryKey, args...).Scan(&newId)
 		if err != nil {
@@ -165,10 +167,10 @@ func (s *EntityService) CollectionList(ctx context.Context, name, id, attrName s
 		return nil, 0, err
 	}
 
-	var collectionAttr *relationdbdao.LoadedAttribute
-	for i := range le.Attributes {
-		if le.Attributes[i].Field == attrName {
-			collectionAttr = &le.Attributes[i]
+	var collectionAttr *descriptors.LoadedAttribute
+	for i := range le.LoadedAttributes {
+		if le.LoadedAttributes[i].Field == attrName {
+			collectionAttr = &le.LoadedAttributes[i]
 			break
 		}
 	}
@@ -207,10 +209,10 @@ func (s *EntityService) CollectionInsert(ctx context.Context, name, id, attrName
 		return nil, err
 	}
 
-	var collectionAttr *relationdbdao.LoadedAttribute
-	for i := range le.Attributes {
-		if le.Attributes[i].Field == attrName {
-			collectionAttr = &le.Attributes[i]
+	var collectionAttr *descriptors.LoadedAttribute
+	for i := range le.LoadedAttributes {
+		if le.LoadedAttributes[i].Field == attrName {
+			collectionAttr = &le.LoadedAttributes[i]
 			break
 		}
 	}
@@ -229,10 +231,10 @@ func (s *EntityService) JunctionList(ctx context.Context, name, id, attrName str
 		return nil, 0, err
 	}
 
-	var junctionAttr *relationdbdao.LoadedAttribute
-	for i := range le.Attributes {
-		if le.Attributes[i].Field == attrName {
-			junctionAttr = &le.Attributes[i]
+	var junctionAttr *descriptors.LoadedAttribute
+	for i := range le.LoadedAttributes {
+		if le.LoadedAttributes[i].Field == attrName {
+			junctionAttr = &le.LoadedAttributes[i]
 			break
 		}
 	}
@@ -243,7 +245,6 @@ func (s *EntityService) JunctionList(ctx context.Context, name, id, attrName str
 	junction := junctionAttr.Junction
 	targetEntity := junction.TargetEntity
 
-	// subquery to find target ids
 	subQuery, subArgs, _ := s.dao.GetBuilder().Select(junction.TargetAttribute.Field).
 		From(junction.JunctionEntity.TableName).
 		Where(squirrel.Eq{junction.SourceAttribute.Field: id}).ToSql()
@@ -280,10 +281,10 @@ func (s *EntityService) JunctionSave(ctx context.Context, name, id, attrName str
 		return err
 	}
 
-	var junctionAttr *relationdbdao.LoadedAttribute
-	for i := range le.Attributes {
-		if le.Attributes[i].Field == attrName {
-			junctionAttr = &le.Attributes[i]
+	var junctionAttr *descriptors.LoadedAttribute
+	for i := range le.LoadedAttributes {
+		if le.LoadedAttributes[i].Field == attrName {
+			junctionAttr = &le.LoadedAttributes[i]
 			break
 		}
 	}
@@ -298,14 +299,12 @@ func (s *EntityService) JunctionSave(ctx context.Context, name, id, attrName str
 	}
 	defer tx.Rollback()
 
-	// 1. Delete existing
 	delQuery, delArgs, _ := s.dao.GetBuilder().Delete(junction.JunctionEntity.TableName).
 		Where(squirrel.Eq{junction.SourceAttribute.Field: id}).ToSql()
 	if _, err := tx.ExecContext(ctx, delQuery, delArgs...); err != nil {
 		return err
 	}
 
-	// 2. Insert new
 	for _, tid := range targetIds {
 		insQuery, insArgs, _ := s.dao.GetBuilder().Insert(junction.JunctionEntity.TableName).
 			Columns(junction.SourceAttribute.Field, junction.TargetAttribute.Field).
@@ -324,10 +323,10 @@ func (s *EntityService) JunctionDelete(ctx context.Context, name, id, attrName s
 		return err
 	}
 
-	var junctionAttr *relationdbdao.LoadedAttribute
-	for i := range le.Attributes {
-		if le.Attributes[i].Field == attrName {
-			junctionAttr = &le.Attributes[i]
+	var junctionAttr *descriptors.LoadedAttribute
+	for i := range le.LoadedAttributes {
+		if le.LoadedAttributes[i].Field == attrName {
+			junctionAttr = &le.LoadedAttributes[i]
 			break
 		}
 	}
@@ -352,7 +351,6 @@ func (s *EntityService) applyFilters(sb squirrel.SelectBuilder, filters []datamo
 			if c.Match == "equals" && len(c.Values) > 0 {
 				sb = sb.Where(squirrel.Eq{f.FieldName: *c.Values[0]})
 			}
-			// Add more match types as needed
 		}
 	}
 	return sb

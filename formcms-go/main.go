@@ -31,6 +31,12 @@ func main() {
 	entityService := services.NewEntityService(schemaService, dao)
 	graphqlService := services.NewGraphQLService(schemaService, entityService)
 	assetService := services.NewAssetService(dao, fileStore, systemSettings)
+	engagementService := services.NewEngagementService(dao)
+	commentService := services.NewCommentService(dao)
+	authService := services.NewAuthService(dao, "your-secret-key")
+	notificationService := services.NewNotificationService(dao)
+	auditService := services.NewAuditService(dao)
+	pageService := services.NewPageService(schemaService, graphqlService)
 
 	// Initialize APIs
 	schemaApi := api.NewSchemaApi(schemaService)
@@ -38,13 +44,20 @@ func main() {
 	graphqlApi := api.NewGraphQLApi(graphqlService)
 	queryApi := api.NewQueryApi(graphqlService)
 	assetApi := api.NewAssetApi(assetService)
+	engagementApi := api.NewEngagementApi(engagementService)
+	commentApi := api.NewCommentApi(commentService)
+	authApi := api.NewAuthApi(authService)
+	notificationApi := api.NewNotificationApi(notificationService, authApi)
+	auditApi := api.NewAuditApi(auditService, authApi)
+	staticApi := api.NewStaticApi()
+	pageApi := api.NewPageApi(pageService)
 
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 
-	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("FormCMS Go is running!"))
+	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("ok"))
 	})
 
 	// Register APIs
@@ -53,6 +66,13 @@ func main() {
 	graphqlApi.Register(r)
 	queryApi.Register(r)
 	assetApi.Register(r)
+	engagementApi.Register(r)
+	commentApi.Register(r)
+	authApi.Register(r)
+	notificationApi.Register(r)
+	auditApi.Register(r)
+	staticApi.Register(r)
+	pageApi.Register(r)
 
 	fmt.Println("Starting FormCMS Go on :5000...")
 	log.Fatal(http.ListenAndServe(":5000", r))

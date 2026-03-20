@@ -1,5 +1,9 @@
 package descriptors
 
+import (
+	"github.com/Masterminds/squirrel"
+)
+
 type PublicationStatus string
 
 const (
@@ -69,8 +73,9 @@ func (e *Entity) ToLoadedEntity() *LoadedEntity {
 		}
 	}
 
-	return &LoadedEntity{
-		Attributes:                 loadedAttributes,
+	le := &LoadedEntity{
+		Entity:                     *e,
+		LoadedAttributes:           loadedAttributes,
 		PrimaryKeyAttribute:        primaryKeyAttribute,
 		LabelAttribute:             labelAttribute,
 		PublicationStatusAttribute: publicationStatusAttribute,
@@ -82,20 +87,6 @@ func (e *Entity) ToLoadedEntity() *LoadedEntity {
 			},
 			TableName: e.TableName,
 		},
-		Name:                     e.Name,
-		DisplayName:              e.DisplayName,
-		TableName:                e.TableName,
-		PrimaryKey:               e.PrimaryKey,
-		LabelAttributeName:       e.LabelAttributeName,
-		DefaultPageSize:          e.DefaultPageSize,
-		DefaultPublicationStatus: e.DefaultPublicationStatus,
-		PageUrl:                  e.PageUrl,
-		TagsQuery:                e.TagsQuery,
-		TagsQueryParam:           e.TagsQueryParam,
-		TitleTagField:            e.TitleTagField,
-		SubtitleTagField:         e.SubtitleTagField,
-		ContentTagField:          e.ContentTagField,
-		ImageTagField:            e.ImageTagField,
-		PublishTimeTagField:      e.PublishTimeTagField,
 	}
+	return le
 }
