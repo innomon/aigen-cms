@@ -54,7 +54,16 @@ func main() {
 			created_at DATETIME,
 			created_by TEXT,
 			deleted BOOLEAN
-		)
+		);
+		CREATE TABLE IF NOT EXISTS __users (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			email TEXT UNIQUE NOT NULL,
+			password_hash TEXT NOT NULL,
+			role TEXT NOT NULL,
+			avatar_path TEXT,
+			created_at DATETIME,
+			updated_at DATETIME
+		);
 	`)
 	if err != nil {
 		log.Fatal(err)
