@@ -40,7 +40,7 @@
 - [x] Implement junction and collection API endpoints (N:N relationships)
 - [x] Implement GraphQL schema generation from dynamic entities
 - [x] Implement GraphQL query execution and N+1 query optimization (Basic execution implemented)
-- [ ] Support converting GraphQL queries to cached REST endpoints
+- [x] Support converting GraphQL queries to cached REST endpoints
 
 ### Phase 3: File Storage & Assets
 - [ ] Define file storage interface (`StorageProvider`)

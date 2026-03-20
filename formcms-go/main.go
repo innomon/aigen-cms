@@ -31,6 +31,7 @@ func main() {
 	schemaApi := api.NewSchemaApi(schemaService)
 	entityApi := api.NewEntityApi(entityService)
 	graphqlApi := api.NewGraphQLApi(graphqlService)
+	queryApi := api.NewQueryApi(graphqlService)
 
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
@@ -44,6 +45,7 @@ func main() {
 	schemaApi.Register(r)
 	entityApi.Register(r)
 	graphqlApi.Register(r)
+	queryApi.Register(r)
 
 	fmt.Println("Starting FormCMS Go on :5000...")
 	log.Fatal(http.ListenAndServe(":5000", r))

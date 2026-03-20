@@ -40,6 +40,18 @@ func (s *GraphQLService) Query(ctx context.Context, query string, variables map[
 	return res.Data, nil
 }
 
+func (s *GraphQLService) ExecuteStoredQuery(ctx context.Context, name string, variables map[string]interface{}) (interface{}, error) {
+	schema, err := s.schemaService.ByNameOrDefault(ctx, name, descriptors.QuerySchema, nil)
+	if err != nil {
+		return nil, err
+	}
+	if schema == nil || schema.Settings == nil || schema.Settings.Query == nil {
+		return nil, fmt.Errorf("stored query %s not found", name)
+	}
+
+	return s.Query(ctx, schema.Settings.Query.Source, variables)
+}
+
 func (s *GraphQLService) BuildSchema(ctx context.Context) (graphql.Schema, error) {
 	schemas, err := s.schemaService.All(ctx, nil, nil, nil)
 	if err != nil {

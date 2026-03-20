@@ -34,4 +34,5 @@ type IEntityService interface {
 
 type IGraphQLService interface {
 	Query(ctx context.Context, query string, variables map[string]interface{}) (interface{}, error)
+	ExecuteStoredQuery(ctx context.Context, name string, variables map[string]interface{}) (interface{}, error)
 }
