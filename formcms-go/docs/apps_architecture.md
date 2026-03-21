@@ -166,3 +166,32 @@ You can customize the database path and output directory using flags:
 ```bash
 go run cmd/export/main.go --db=path/to/my-db.sqlite --out=./my-export-dir
 ```
+
+---
+
+## 8. Importing App Modifications
+
+You can restore your exported app modifications (both schemas and data) into any database using the `cmd/import` utility. This is extremely useful for migrating modifications across environments, resetting test databases, or seeding production instances.
+
+### Using the Import Utility
+
+The import tool dynamically reads your exported `.json` schemas and data files, creates the necessary core tables (`__schemas`) and dynamic entity tables if they do not exist, and inserts all definitions and row data back into the target database.
+
+From the `formcms-go` directory, run:
+
+```bash
+go run cmd/import/main.go
+```
+
+By default, it reads from the `./exports` directory and imports into `formcms.db`.
+
+You can optionally specify the input folder and target database:
+```bash
+go run cmd/import/main.go --in=./my-export-dir --db=path/to/target-db.sqlite
+```
+
+**Idempotency & Preventing Duplicates:**
+The import script is designed to be completely safe to run multiple times:
+1. **Schemas:** Before inserting a schema into the `__schemas` table, the utility checks if a schema of the same type and name already exists. If it does, it skips it.
+2. **Tables:** It uses `CREATE TABLE IF NOT EXISTS` when constructing physical SQL tables, safely ignoring tables that are already built.
+3. **Data:** Exported records contain their original primary key (`id`). During import, the utility verifies if a record with that specific `id` already exists in the target table. Existing records are skipped, meaning running the import twice will **not** duplicate your exported data. (Note: If you manually author new data in the `.json` files without providing an `"id"`, the database will treat those as brand-new records and auto-assign them IDs, which could cause duplication if run multiple times).
