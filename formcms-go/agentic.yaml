@@ -51,6 +51,20 @@ tools:
     description: List all schemas
     parameters: {}
 
+  cms_app_list:
+    type: builtin
+    description: List all available CMS apps and their descriptions.
+    parameters: {}
+
+  cms_app_get:
+    type: builtin
+    description: Get the detailed definition and context for a specific CMS app, including roles and entity descriptions.
+    parameters:
+      name:
+        type: string
+        description: Name of the app
+        required: true
+
   cms_a2ui_update:
     type: builtin
     description: Update a component in the A2UI dashboard
@@ -92,6 +106,8 @@ agents:
       - cms_entity_get
       - cms_entity_create
       - cms_schema_list
+      - cms_app_list
+      - cms_app_get
 
   ui_agent:
     type: llm
