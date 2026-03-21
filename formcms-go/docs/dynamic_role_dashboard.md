@@ -61,28 +61,28 @@ We will extend the existing dynamic schemas in `apps/rbac/schemas/`:
 ## 4. Implementation Plan
 
 ### Phase 1: Schema Updates
-- [ ] **Task 1.1:** Update `apps/rbac/schemas/role.json` to include `dashboard_page_id` and `menu_id` attributes.
-- [ ] **Task 1.2:** Update `apps/rbac/schemas/user.json` to include `default_role_id`.
-- [ ] **Task 1.3:** Create or update initialization data (`apps/rbac/data/test_data.json`) to map the `admin` role to an `admin_dashboard` page and `admin_menu`.
+- [x] **Task 1.1:** Update `apps/rbac/schemas/role.json` to include `dashboard_page_id` and `menu_id` attributes.
+- [x] **Task 1.2:** Update `apps/rbac/schemas/user.json` to include `default_role_id`.
+- [x] **Task 1.3:** Create or update initialization data (`apps/rbac/data/test_data.json`) to map the `admin` role to an `admin_dashboard` page and `admin_menu`.
 
 ### Phase 2: Backend API Enhancements
-- [ ] **Task 2.1:** Modify `AuthService.ValidateToken` or create a new `GetMe()` method to deeply fetch the user's roles, including the `dashboard_page_id` and `menu_id` associated with those roles.
-- [ ] **Task 2.2:** Update the `/api/auth/me` endpoint to return this structured role data to the frontend.
+- [x] **Task 2.1:** Modify `AuthService.ValidateToken` or create a new `GetMe()` method to deeply fetch the user's roles, including the `dashboard_page_id` and `menu_id` associated with those roles.
+- [x] **Task 2.2:** Update the `/api/auth/me` endpoint to return this structured role data to the frontend.
 
 ### Phase 3: Frontend Navigation & State Management
-- [ ] **Task 3.1:** Update `js/utils/user.js` to handle `activeRoleId` state (saving/loading from `localStorage`).
-- [ ] **Task 3.2:** Modify `js/components/navbar.js` to build the navigation links dynamically by fetching the Menu entity defined by `user.activeRole.menu_id`.
-- [ ] **Task 3.3:** Inject a `<select>` dropdown in the Navbar if the user has more than one role, wiring the `onChange` event to update `activeRoleId` and refresh the UI.
+- [x] **Task 3.1:** Update `js/utils/user.js` to handle `activeRoleId` state (saving/loading from `localStorage`).
+- [x] **Task 3.2:** Modify `js/components/navbar.js` to build the navigation links dynamically by fetching the Menu entity defined by `user.activeRole.menu_id`.
+- [x] **Task 3.3:** Inject a `<select>` dropdown in the Navbar if the user has more than one role, wiring the `onChange` event to update `activeRoleId` and refresh the UI.
 
 ### Phase 4: Dynamic Dashboard Rendering
-- [ ] **Task 4.1:** Create a new `dashboard.html` (or modify `index.html`) to act as the landing page.
-- [ ] **Task 4.2:** On load, the dashboard fetches `user.activeRole.dashboard_page_id`.
-- [ ] **Task 4.3:** Implement the fallback logic: If `dashboard_page_id` is null or the fetch fails, load the system-defined `default_dashboard` page.
-- [ ] **Task 4.4:** Fetch the page content via the existing `/api/pages/{id}` endpoint and render the HTML/CSS components directly into the DOM container.
+- [x] **Task 4.1:** Create a new `dashboard.html` (or modify `index.html`) to act as the landing page.
+- [x] **Task 4.2:** On load, the dashboard fetches `user.activeRole.dashboard_page_id`.
+- [x] **Task 4.3:** Implement the fallback logic: If `dashboard_page_id` is null or the fetch fails, load the system-defined `default_dashboard` page.
+- [x] **Task 4.4:** Fetch the page content via the existing `/api/pages/{id}` endpoint and render the HTML/CSS components directly into the DOM container.
 
 ### Phase 5: Testing & Verification
-- [ ] **Task 5.1:** Create a "System Admin" role and a standard "User" role in the database.
-- [ ] **Task 5.2:** Assign both roles to a test user.
-- [ ] **Task 5.3:** Create two separate Pages via the GrapesJS editor. Link them to the respective roles.
-- [ ] **Task 5.4:** Log in as the test user. Verify the default dashboard loads.
-- [ ] **Task 5.5:** Use the dropdown to switch roles. Verify the navigation menu and dashboard content change seamlessly without requiring re-authentication.
+- [x] **Task 5.1:** Create a "System Admin" role and a standard "User" role in the database.
+- [x] **Task 5.2:** Assign both roles to a test user.
+- [x] **Task 5.3:** Create two separate Pages via the GrapesJS editor. Link them to the respective roles.
+- [x] **Task 5.4:** Log in as the test user. Verify the default dashboard loads.
+- [x] **Task 5.5:** Use the dropdown to switch roles. Verify the navigation menu and dashboard content change seamlessly without requiring re-authentication.

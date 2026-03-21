@@ -48,7 +48,7 @@
                 
                 if (res.ok) {
                     const params = new URLSearchParams(window.location.search);
-                    window.location.href = params.get('ref') || '/admin/list.html';
+                    window.location.href = params.get('ref') || '/admin/dashboard.html';
                 } else {
                     const text = await res.text();
                     errorAlert.textContent = text || 'Login failed';

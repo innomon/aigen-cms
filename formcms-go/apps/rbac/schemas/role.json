@@ -20,6 +20,22 @@
       "DisplayType": "Checkbox",
       "InList": true,
       "InDetail": true
+    },
+    {
+      "Field": "dashboard_page_id",
+      "Header": "Dashboard Page",
+      "DataType": "String",
+      "DisplayType": "Text",
+      "InList": false,
+      "InDetail": true
+    },
+    {
+      "Field": "menu_id",
+      "Header": "Menu",
+      "DataType": "String",
+      "DisplayType": "Text",
+      "InList": false,
+      "InDetail": true
     }
   ]
 }

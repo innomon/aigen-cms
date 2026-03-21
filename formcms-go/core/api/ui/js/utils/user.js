@@ -19,6 +19,21 @@ export function ensureUser(){
     return false; 
 }
 
+export function getActiveRoleId() {
+    return localStorage.getItem('activeRoleId') || (user ? String(user.defaultRoleId || user.rolesDetails?.[0]?.id || '') : null);
+}
+
+export function setActiveRoleId(roleId) {
+    localStorage.setItem('activeRoleId', roleId);
+    window.location.reload();
+}
+
+export function getActiveRole() {
+    if (!user || !user.rolesDetails) return null;
+    const activeId = getActiveRoleId();
+    return user.rolesDetails.find(r => String(r.id) === activeId) || user.rolesDetails[0];
+}
+
 //single flight
 export async function fetchUser() {
     if (user) return;
@@ -29,6 +44,9 @@ export async function fetchUser() {
     try {
         currentUserPromise = fetchMe();
         user = await currentUserPromise;
+        if (user && !localStorage.getItem('activeRoleId') && user.defaultRoleId) {
+            localStorage.setItem('activeRoleId', user.defaultRoleId);
+        }
         return user;
     } catch (error) {
         return false;

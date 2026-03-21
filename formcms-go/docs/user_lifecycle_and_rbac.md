@@ -61,6 +61,13 @@ Row-level access restricts the records a user can see based on specific field va
 * **Read Enforcement:** When scanning rows from the database, the system will nullify or omit fields where the user's roles lack `read` permission for that field's `PermLevel`.
 * **Write/Create Enforcement:** During data ingestion, the system silently drops or rejects payload fields where the user lacks `write` permission for that field's `PermLevel`.
 
+### 3.5. Dynamic Role-Based Dashboard & Navigation
+To provide a tailored experience, the system supports dynamic dashboards and menus based on the user's active role.
+* **Role Configuration:** Each Role can be linked to a `dashboard_page_id` (a dynamic Page created via the system's GrapesJS page builder) and a `menu_id` (a Menu entity).
+* **Default Assignment:** Users have a `default_role_id`. Upon login, the frontend routes the user to the dashboard corresponding to this default role.
+* **Role Switching:** If a user holds multiple roles, a role switcher is presented in the navigation bar. Selecting a different role updates the frontend state (`activeRoleId`), immediately reloading the UI to display the new role's dashboard and navigation menu.
+* **Fallback:** If a role does not have a configured dashboard, or the fetch fails, the system automatically falls back to a generic default dashboard.
+
 ---
 
 ## 4. Data Models
@@ -74,6 +81,7 @@ The RBAC system introduces several dynamic schemas in the database.
 | email | String | User email (Login ID) |
 | password_hash| String | Encrypted password |
 | avatar_path | String | URL/Path to avatar |
+| default_role_id | Integer | The default role id for the dashboard |
 | role | String | Legacy role field |
 
 ### 4.2. Role (`__roles`)
@@ -82,6 +90,8 @@ The RBAC system introduces several dynamic schemas in the database.
 | id | ID | Primary Key |
 | name | String | Role name (Unique) |
 | disabled | Boolean | Inactive flag |
+| dashboard_page_id | String | The Page entity ID assigned to this role's dashboard |
+| menu_id | String | The Menu entity ID assigned to this role's navigation |
 
 ### 4.3. User Role (`__user_roles`)
 *Junction table for Many-to-Many User-to-Role mapping.*

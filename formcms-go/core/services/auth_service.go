@@ -80,38 +80,43 @@ func (s *AuthService) Register(ctx context.Context, email, password string) (*de
 	return user, nil
 }
 
-func (s *AuthService) getRoles(ctx context.Context, userId int64, legacyRole string) ([]string, error) {
-	query, args, err := s.dao.GetBuilder().Select("r.name").From("__user_roles ur").
+func (s *AuthService) getRoles(ctx context.Context, userId int64, legacyRole string) ([]string, []descriptors.Role, error) {
+	query, args, err := s.dao.GetBuilder().Select("r.id, r.name, r.disabled, r.dashboard_page_id, r.menu_id").From("__user_roles ur").
 		Join("__roles r ON ur.role_id = r.id").
 		Where(squirrel.Eq{"ur.user_id": userId}).ToSql()
 
 	if err != nil {
-		return []string{legacyRole}, nil // Fallback to legacy
+		return []string{legacyRole}, nil, nil // Fallback to legacy
 	}
 
 	rows, err := s.dao.GetDb().QueryContext(ctx, query, args...)
 	if err != nil {
-		return []string{legacyRole}, nil // Fallback to legacy
+		return []string{legacyRole}, nil, nil // Fallback to legacy
 	}
 	defer rows.Close()
 
 	var roles []string
+	var rolesDetails []descriptors.Role
 	for rows.Next() {
-		var role string
-		if err := rows.Scan(&role); err == nil {
-			roles = append(roles, role)
+		var role descriptors.Role
+		var dashboardPageId, menuId sql.NullString
+		if err := rows.Scan(&role.Id, &role.Name, &role.Disabled, &dashboardPageId, &menuId); err == nil {
+			role.DashboardPageId = dashboardPageId.String
+			role.MenuId = menuId.String
+			rolesDetails = append(rolesDetails, role)
+			roles = append(roles, role.Name)
 		}
 	}
 
 	if len(roles) == 0 {
-		return []string{legacyRole}, nil
+		return []string{legacyRole}, nil, nil
 	}
 
-	return roles, nil
+	return roles, rolesDetails, nil
 }
 
 func (s *AuthService) Login(ctx context.Context, email, password string) (string, error) {
-	query, args, err := s.dao.GetBuilder().Select("*").From(descriptors.UserTableName).
+	query, args, err := s.dao.GetBuilder().Select("id", "email", "password_hash", "role", "avatar_path", "default_role_id", "created_at", "updated_at").From(descriptors.UserTableName).
 		Where(squirrel.Eq{"email": email}).Limit(1).ToSql()
 	if err != nil {
 		return "", err
@@ -121,8 +126,9 @@ func (s *AuthService) Login(ctx context.Context, email, password string) (string
 	var id int64
 	var e, pass, role string
 	var avatar sql.NullString
+	var defaultRoleId sql.NullInt64
 	var createdAt, updatedAt time.Time
-	if err := row.Scan(&id, &e, &pass, &role, &avatar, &createdAt, &updatedAt); err != nil {
+	if err := row.Scan(&id, &e, &pass, &role, &avatar, &defaultRoleId, &createdAt, &updatedAt); err != nil {
 		return "", fmt.Errorf("user not found: %w", err)
 	}
 
@@ -130,7 +136,7 @@ func (s *AuthService) Login(ctx context.Context, email, password string) (string
 		return "", fmt.Errorf("invalid password")
 	}
 
-	roles, _ := s.getRoles(ctx, id, role)
+	roles, _, _ := s.getRoles(ctx, id, role)
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"userId": id,
@@ -142,7 +148,7 @@ func (s *AuthService) Login(ctx context.Context, email, password string) (string
 }
 
 func (s *AuthService) Me(ctx context.Context, userId int64) (*descriptors.User, error) {
-	query, args, err := s.dao.GetBuilder().Select("*").From(descriptors.UserTableName).
+	query, args, err := s.dao.GetBuilder().Select("id", "email", "password_hash", "role", "avatar_path", "default_role_id", "created_at", "updated_at").From(descriptors.UserTableName).
 		Where(squirrel.Eq{"id": userId}).Limit(1).ToSql()
 	if err != nil {
 		return nil, err
@@ -152,21 +158,29 @@ func (s *AuthService) Me(ctx context.Context, userId int64) (*descriptors.User, 
 	var id int64
 	var e, pass, role string
 	var avatar sql.NullString
+	var defaultRoleId sql.NullInt64
 	var createdAt, updatedAt time.Time
-	if err := row.Scan(&id, &e, &pass, &role, &avatar, &createdAt, &updatedAt); err != nil {
+	if err := row.Scan(&id, &e, &pass, &role, &avatar, &defaultRoleId, &createdAt, &updatedAt); err != nil {
 		return nil, fmt.Errorf("user not found: %w", err)
 	}
 
-	roles, _ := s.getRoles(ctx, id, role)
+	roles, rolesDetails, _ := s.getRoles(ctx, id, role)
+	
+	var defaultRolePtr *int64
+	if defaultRoleId.Valid {
+		defaultRolePtr = &defaultRoleId.Int64
+	}
 
 	return &descriptors.User{
-		Id:           id,
-		Email:        e,
-		PasswordHash: pass,
-		Roles:        roles,
-		AvatarPath:   avatar.String,
-		CreatedAt:    createdAt,
-		UpdatedAt:    updatedAt,
+		Id:            id,
+		Email:         e,
+		PasswordHash:  pass,
+		Roles:         roles,
+		RolesDetails:  rolesDetails,
+		DefaultRoleId: defaultRolePtr,
+		AvatarPath:    avatar.String,
+		CreatedAt:     createdAt,
+		UpdatedAt:     updatedAt,
 	}, nil
 }
 

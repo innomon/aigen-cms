@@ -36,6 +36,14 @@
       "DisplayType": "Text",
       "InList": false,
       "InDetail": true
+    },
+    {
+      "Field": "default_role_id",
+      "Header": "Default Role",
+      "DataType": "Integer",
+      "DisplayType": "Number",
+      "InList": false,
+      "InDetail": true
     }
   ]
 }
