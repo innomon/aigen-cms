@@ -8,6 +8,7 @@ A headless CMS framework in Go, rewritten from the [FormCMS](https://github.com/
   - **Router Agent**: Intelligently routes user requests between specialized sub-agents.
   - **CMS Agent**: Manages and queries CMS data and schemas autonomously.
   - **UI Agent**: Dynamically updates the A2UI dashboard components based on user interactions and data changes.
+- **App Capability Discovery**: Built-in `app_def.json` and context file framework allowing LLM agents to dynamically discover app purpose, roles, and entity relationships.
 - **A2UI Protocol**: Real-time Agent-to-User Interface for streaming backend-driven UI updates (SSE) using a high-performance adjacency list model.
 - **Frappe/ERPNext Integration**: Built-in support for importing and mapping Frappe Doctypes to native CMS schemas.
 - **Advanced RBAC**: Granular Role-Based Access Control with field-level and row-level security filters.

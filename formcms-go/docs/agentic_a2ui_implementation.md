@@ -15,7 +15,11 @@ The core of the multi-agent system is defined in `agentic.yaml`. This file dicta
   - **Router Agent (`router_agent`)**: The root agent responsible for triaging incoming user requests and delegating them to the appropriate specialized sub-agent.
   - **CMS Agent (`cms_agent`)**: A specialized LLM agent instructed to act as the CMS data assistant. It has access to tools like `cms_entity_list`, `cms_entity_get`, `cms_entity_create`, and `cms_schema_list`.
   - **UI Agent (`ui_agent`)**: A specialized LLM agent instructed to manage the A2UI dashboard. It uses the `cms_a2ui_update` tool to dynamically render or modify UI components.
-- **Tools**: Built-in functions registered in Go that the LLM can invoke to interact with the underlying `EntityService` and `SchemaService`.
+- **Tools**: Built-in functions registered in Go that the LLM can invoke to interact with the underlying `EntityService` and `SchemaService`. Key tools include:
+  - `cms_entity_list`, `cms_entity_get`, `cms_entity_create`: For data manipulation.
+  - `cms_schema_list`: For listing available schemas.
+  - `cms_app_list`, `cms_app_get`: For exploring installed apps, their definitions, roles, and entity contexts.
+  - `cms_a2ui_update`: For modifying the frontend A2UI state.
 
 ### 2.2. The Router Agent (`router_agent.go`)
 The `RouterAgent` is a custom Go implementation registered with the ADK `registry`. It implements a lightweight, keyword-based intent classification system.
@@ -81,3 +85,26 @@ The integration between the Frontend (Renderer), Backend (Agent), and Database (
 
 ### 4.4. Security and RBAC
 The A2UI layer is "security-aware". When the Agent fetches data to populate an A2UI component (like a `DataTable`), it executes through the `EntityService` using the user's authenticated context. This ensures that all Role-Based Access Control (RBAC), row-level filters, and field-level permissions are strictly enforced before the data ever reaches the UI generation phase. Client-side execution of arbitrary code is prevented by restricting rendering to a pre-defined, trusted component catalog.
+
+---
+
+## 5. App Capability Discovery
+
+To allow the Agent to dynamically discover and understand the purpose, roles, and entities of installed applications, `formcms-go` utilizes an expanded App Definition framework.
+
+### 5.1. The `app_def.json` Specification
+Each application can define an `app_def.json` file in its root directory (e.g., `apps/erpnext_accounting/app_def.json`). This file acts as a manifest that provides the LLM with deep context:
+- `name`: The system name of the app.
+- `display_name`: Human-readable name.
+- `description`: A short summary of the app's purpose.
+- `context`: A longer, detailed explanation of the app's business domain and usage.
+- `roles`: An array of applicable roles for the app (e.g., `["System Manager", "Auditor"]`).
+- `entities`: A mapping of entity schemas to their descriptions and, optionally, a `context_file`.
+
+### 5.2. Context Files
+Entities defined in `app_def.json` can point to external Markdown context files via the `context_file` property (e.g., `docs/account.md`). These files contain detailed business rules, relationships, or specific instructions on how to handle the entity, which is directly injected into the LLM's context window.
+
+### 5.3. Discovery Tools
+The Agent discovers this information through two primary tools:
+1. **`cms_app_list`**: Reads the global `apps.json` to find enabled apps, then parses each app's `app_def.json` to return a summarized list of available applications.
+2. **`cms_app_get`**: Retrieves the full definition of a specific app. Crucially, this tool automatically traverses the `entities` mapping, reads any referenced `context_file`s from the disk, and embeds their raw text directly into the response payload. This allows the LLM to acquire comprehensive entity knowledge in a single tool call without manual file system navigation.
