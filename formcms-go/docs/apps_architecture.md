@@ -195,3 +195,5 @@ The import script is designed to be completely safe to run multiple times:
 1. **Schemas:** Before inserting a schema into the `__schemas` table, the utility checks if a schema of the same type and name already exists. If it does, it skips it.
 2. **Tables:** It uses `CREATE TABLE IF NOT EXISTS` when constructing physical SQL tables, safely ignoring tables that are already built.
 3. **Data:** Exported records contain their original primary key (`id`). During import, the utility verifies if a record with that specific `id` already exists in the target table. Existing records are skipped, meaning running the import twice will **not** duplicate your exported data. (Note: If you manually author new data in the `.json` files without providing an `"id"`, the database will treat those as brand-new records and auto-assign them IDs, which could cause duplication if run multiple times).
+
+**Note:** Export from a local SQLite development environment and import directly into a production PostgreSQL environment without modifying the JSON files, is supported.

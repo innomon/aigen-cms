@@ -256,10 +256,27 @@ func importData(ctx context.Context, dao relationdbdao.IPrimaryDao, schemaServic
 				}
 			}
 
-			// Clean fields that might be nil to valid DB types where needed, though Squirrel handles most
+			// Clean fields and normalize types for cross-database compatibility (e.g. SQLite 0/1 to Postgres true/false)
 			var cols []string
 			var vals []interface{}
 			for k, v := range record {
+				// Normalize Booleans
+				for _, attr := range entity.Attributes {
+					if attr.Field == k && attr.DataType == descriptors.Boolean {
+						if floatVal, ok := v.(float64); ok { // JSON unmarshals numbers to float64
+							if floatVal == 1 {
+								v = true
+							} else if floatVal == 0 {
+								v = false
+							}
+						}
+					}
+				}
+				// Skip 'deleted' if it's nil
+				if k == "deleted" && v == nil {
+					v = false
+				}
+
 				cols = append(cols, k)
 				vals = append(vals, v)
 			}
