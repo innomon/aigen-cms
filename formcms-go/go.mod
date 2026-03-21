@@ -13,7 +13,7 @@ require (
 	github.com/go-chi/chi/v5 v5.2.5
 	github.com/golang-jwt/jwt/v5 v5.3.1
 	github.com/graphql-go/graphql v0.8.1
-	github.com/innomon/agentic v0.0.0-20260311123438-bd76508ea13b
+	github.com/innomon/agentic v0.0.0-20260320153519-6c57ab2d48dd
 	github.com/lib/pq v1.12.0
 	github.com/matoous/go-nanoid/v2 v2.1.0
 	github.com/mitchellh/mapstructure v1.5.0
@@ -129,5 +129,3 @@ require (
 	rsc.io/omap v1.2.0 // indirect
 	rsc.io/ordered v1.1.1 // indirect
 )
-
-replace github.com/innomon/agentic => /home/innomon/orez/agentic
