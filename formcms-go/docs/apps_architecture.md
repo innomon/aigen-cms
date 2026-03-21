@@ -140,4 +140,29 @@ Modifying an app's structure or behavior depends on what phase the modification 
 **Modifying via CMS (Post-deployment):**
 - Once deployed, the app's schemas are saved in the internal `__schemas` table. 
 - You can use the CMS admin interface to dynamically add new columns, modify pages, or adjust Handlebars templates. These modifications are persisted to the database and take effect immediately via the dynamic `squirrel` query builder and `raymond` templating engine.
-- Note: UI modifications currently exist in the database and would need to be exported back to `.json` files if you want to bundle them into the persistent app source code.
+- Note: UI modifications currently exist in the database and would need to be exported back to `.json` files if you want to bundle them into the persistent app source code. You can use the `cmd/export` utility for this.
+
+---
+
+## 7. Exporting App Modifications
+
+Since UI modifications and dynamically created data live in the database (e.g., in the `__schemas` table and individual dynamic tables), you can use the built-in export utility to export these modifications back into JSON files. This allows you to bundle them into your source control as part of your application.
+
+### Using the Export Utility
+
+The export utility connects to the SQLite database, extracts all published schemas (Entity, Page, Menu, Query) as well as the row data for `EntitySchema` objects, and saves them to an output directory.
+
+From the `formcms-go` directory, run:
+
+```bash
+go run cmd/export/main.go
+```
+
+By default, this will read from `formcms.db` and output to an `exports` directory:
+- **Schemas**: Extracted to `exports/schemas/<SchemaType>/<SchemaName>.json`
+- **Data**: Extracted to `exports/data/<EntityName>.json`
+
+You can customize the database path and output directory using flags:
+```bash
+go run cmd/export/main.go --db=path/to/my-db.sqlite --out=./my-export-dir
+```

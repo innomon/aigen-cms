@@ -17,3 +17,8 @@ obj/
 firebase-debug.log
 .firebase/
 .gemini/tmp
+
+# Exclude exports directory
+formcms-go/exports/
+
+
