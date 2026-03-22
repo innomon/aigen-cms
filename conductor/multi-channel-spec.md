@@ -1,57 +1,58 @@
-# Specification: Multi-Channel Communication & Authentication
+# Specification: Multi-Channel Communication (A2A & MCP Redesign)
 
 ## 1. Overview
-The Multi-Channel Communication system enables `aigen-cms` to interact with users across various platforms (WhatsApp, Email, Signal, Telegram, X.com, Bluesky). It provides a unified way to link channel identities to user profiles, authenticate via these channels, and maintain a secure audit trail (e-trail) for all interactions.
+This specification defines a redesigned multi-channel communication system for `aigen-cms` using the **Agent2Agent (A2A)** protocol and providing external access via the **Model Context Protocol (MCP)**. All channels (WhatsApp, Email, Signal, Telegram) now act as A2A agents, communicating via structured JSON-RPC messages and authenticated using Ed25519 JWTs.
 
-## 2. Core Components
+## 2. A2A Communication Layer
 
-### 2.1. Channel Types
-Supported channels include:
-- **WhatsApp**: Integrated via `whatsadk` (Ed25519 JWT auth).
-- **Email**: Integrated via `mailadk` (IMAP polling, JWT verification).
-- **Signal/Telegram**: Messaging-based interaction and auth.
-- **X.com (Twitter) / Bluesky**: Social platform interaction for support/tracking.
+### 2.1. Channel as A2A Agent
+Each communication channel (WhatsApp, Email, etc.) is treated as an independent A2A agent.
+- **Protocol**: A2A (JSON-RPC 2.0 over HTTP/SSE).
+- **Authentication**: Ed25519 JWT.
+- **Claims**:
+    - `iss`: Channel ID (e.g., `whatsapp-gateway`).
+    - `sub`: User ID or `guest`.
+    - `channel_id`: Unique identifier for the specific channel instance.
+    - `iat`, `exp`: Standard time claims.
 
-### 2.2. User Channel Mapping (`UserChannel`)
-Each user can have multiple optional channels.
-- `UserId`: Link to the core `User`.
-- `ChannelType`: Type of channel (e.g., `whatsapp`, `email`).
-- `Identifier`: Channel-specific ID (phone number, email address, handle).
-- `IsAuthenticated`: Boolean flag for verification status.
-- `Metadata`: JSON field storing tokens, public keys, or session data.
+### 2.2. Trusted Channel Auth
+- `aigen-cms` maintains a registry of trusted channel public keys (Ed25519).
+- JWTs signed by these keys are accepted for direct user identification or guest session initialization.
+- Channels can also request a JWT from the CMS to authenticate outbound requests.
 
-### 2.3. Authentication & Non-Repudiation
-- **Multi-Channel Auth**: Users can log in or verify their identity using a channel (e.g., clicking a WhatsApp deep link).
-- **Auth Log (E-trail)**: Every authentication attempt is logged with:
-    - User ID (if known)
-    - Channel Type
-    - Action (login, verify, etc.)
-    - IP Address
-    - User Agent
-    - Success Status
-    - Payload/Nonce hash for non-repudiation.
+### 2.3. Messaging Flow
+- **Inbound**: Channel Agent sends an A2A `sendMessage` request to the CMS.
+- **Outbound**: CMS sends an A2A `sendMessage` request to the Channel Agent's gateway URL.
+- **Task Management**: Uses A2A `Task` objects to track long-running interactions (e.g., order tracking).
 
-### 2.4. Guest Access
-- Channels can be configured to allow "guest" users (e.g., for initial support queries).
-- Guest users can be automatically promoted to registered users upon successful channel verification.
+## 3. MCP Server Integration
 
-### 2.5. Configuration
-Downstream apps can configure channels via `config.yaml`:
+### 3.1. Purpose
+Expose CMS capabilities (entity management, querying, agent tools) to external agents like Claude, ChatGPT, or custom co-workers.
+
+### 3.2. Implementation
+- Built using the official **MCP Go SDK** (`github.com/modelcontextprotocol/go-sdk`).
+- **Endpoint**: `/api/mcp` (supporting SSE transport).
+
+### 3.3. Authentication & Authorization
+- **Mechanism**: API Key (conceptually similar to Gemini API Key).
+- **Gating**: Each API Key is linked to a system user with the **"MCP" role**.
+- **Role Permissions**: The "MCP" role determines which tools and resources are visible and executable via the MCP server.
+
+## 4. E-trail & Non-Repudiation
+- Every A2A message and MCP request is logged in the `__auth_logs` table.
+- Logs include: Message Hash, Signature, IP, User Agent, and Timestamp.
+
+## 5. Configuration (`config.yaml`)
 ```yaml
 channels:
-  whatsapp:
-    enabled: true
-    public_key: "..." # For verifying whatsadk JWTs
-  email:
-    enabled: true
-    verification_required: true
-  guest_access:
-    allowed_channels: ["whatsapp", "email"]
-    default_role: "guest"
+  a2a_enabled: true
+  trusted_keys:
+    - id: "whatsapp-gateway"
+      public_key: "..."
+mcp:
+  enabled: true
+  api_keys:
+    - key: "cms_mcp_..."
+      user_id: 100 # User with "MCP" role
 ```
-
-## 3. Architecture
-- **Service**: `ChannelService` handles registration, verification, and routing of inbound/outbound messages.
-- **Security**: Uses `Ed25519` for compact, secure tokens (especially for WhatsApp).
-- **Storage**: New tables `__user_channels` and `__auth_logs`.
-- **Extensibility**: Each channel can have its own provider implementation.
