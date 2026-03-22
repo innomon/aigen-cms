@@ -4,6 +4,7 @@ go 1.25.6
 
 require (
 	github.com/Masterminds/squirrel v1.5.4
+	github.com/a2aproject/a2a-go/v2 v2.0.0
 	github.com/aws/aws-sdk-go-v2 v1.41.4
 	github.com/aws/aws-sdk-go-v2/config v1.32.12
 	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.22.8
@@ -17,6 +18,7 @@ require (
 	github.com/lib/pq v1.12.0
 	github.com/matoous/go-nanoid/v2 v2.1.0
 	github.com/mitchellh/mapstructure v1.5.0
+	github.com/modelcontextprotocol/go-sdk v1.4.1-0.20260320112856-ea161959d7c8
 	github.com/oklog/ulid/v2 v2.1.1
 	github.com/stretchr/testify v1.11.1
 	golang.org/x/crypto v0.49.0
@@ -31,7 +33,6 @@ require (
 	cloud.google.com/go/auth v0.18.2 // indirect
 	cloud.google.com/go/compute/metadata v0.9.0 // indirect
 	github.com/a2aproject/a2a-go v0.3.11 // indirect
-	github.com/a2aproject/a2a-go/v2 v2.0.0 // indirect
 	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.7.7 // indirect
 	github.com/aws/aws-sdk-go-v2/credentials v1.19.12 // indirect
 	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.18.20 // indirect
@@ -82,7 +83,6 @@ require (
 	github.com/lann/ps v0.0.0-20150810152359-62de8c46ede0 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mattn/go-sqlite3 v1.14.37 // indirect
-	github.com/modelcontextprotocol/go-sdk v1.4.1-0.20260320112856-ea161959d7c8 // indirect
 	github.com/ncruces/go-strftime v1.0.0 // indirect
 	github.com/openai/openai-go/v3 v3.29.0 // indirect
 	github.com/pelletier/go-toml v1.9.5 // indirect
