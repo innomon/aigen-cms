@@ -152,7 +152,7 @@ Since UI modifications and dynamically created data live in the database (e.g., 
 
 The export utility connects to the SQLite database, extracts all published schemas (Entity, Page, Menu, Query) as well as the row data for `EntitySchema` objects, and saves them to an output directory.
 
-From the `formcms-go` directory, run:
+From your project directory, run:
 
 ```bash
 go run cmd/export/main.go
@@ -177,7 +177,7 @@ You can restore your exported app modifications (both schemas and data) into any
 
 The import tool dynamically reads your exported `.json` schemas and data files, creates the necessary core tables (`__schemas`) and dynamic entity tables if they do not exist, and inserts all definitions and row data back into the target database.
 
-From the `formcms-go` directory, run:
+From your project directory, run:
 
 ```bash
 go run cmd/import/main.go

@@ -1,7 +1,7 @@
 # A2UI Integration Specification
 
 ## Overview
-This specification outlines the integration of the **Agent-to-User Interface (A2UI)** protocol into `formcms-go`. A2UI allows the backend ("The Agent") to stream rich, interactive UI structures as JSON data to the frontend ("The Client"), which renders them using a trusted component catalog.
+This specification outlines the integration of the **Agent-to-User Interface (A2UI)** protocol into `AiGen CMS`. A2UI allows the backend ("The Agent") to stream rich, interactive UI structures as JSON data to the frontend ("The Client"), which renders them using a trusted component catalog.
 
 ## Core Architectural Components
 

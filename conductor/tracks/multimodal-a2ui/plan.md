@@ -6,7 +6,7 @@ Implement a Multimodal Chat interface powered by the `agentic` framework with A2
 ## Checklist
 
 ### 1. Framework Integration
-- [ ] **Import Agentic Dependency**: Update `go.mod` in `formcms-go` to include `github.com/innomon/agentic`. We MUST NOT make any modifications to the `agentic` project's source code.
+- [ ] **Import Agentic Dependency**: Update `go.mod` in `AiGen CMS` to include `github.com/innomon/agentic`. We MUST NOT make any modifications to the `agentic` project's source code.
 - [ ] **Agent Config Initialization**: Set up `agentic` config loading (YAMLs) and registry initialization in `core/apps/setup.go` or a dedicated `chat_service.go`.
 
 ### 2. Function Tool Integration

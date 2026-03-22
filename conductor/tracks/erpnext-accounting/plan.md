@@ -2,7 +2,7 @@
 
 ## Phase 1: Research & Mapping (Done)
 - [x] Analyze ERPNext accounting DocTypes.
-- [x] Analyze `formcms-go` Entity/Schema system.
+- [x] Analyze `AiGen CMS` Entity/Schema system.
 - [x] Define mapping rules.
 
 ## Phase 2: Schema Definition
@@ -18,14 +18,14 @@
 - [x] Create JSON Schema files for these entities. (Handled dynamically via setup.go)
 
 ## Phase 3: Framework Enhancements
-- [x] Add `Float` and `Decimal` support to `formcms-go`.
+- [x] Add `Float` and `Decimal` support to `AiGen CMS`.
     - [x] Update `descriptors.DataType`.
     - [x] Update `datamodels.ColumnType`.
     - [x] Update `sqlite.go` and `postgres.go` to support FLOAT/DECIMAL.
     - [x] Update `displaymodels.DisplayType` if needed.
 
 ## Phase 4: Implementation
-- [x] Implement the `Entity` registration in `formcms-go`.
+- [x] Implement the `Entity` registration in `AiGen CMS`.
 - [x] Verify schema creation in the database.
 
 ## Phase 5: Validation

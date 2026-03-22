@@ -1,7 +1,7 @@
 # Multimodal Chat & Agentic Integration Specification
 
 ## Overview
-This specification outlines the integration of a Multimodal Chat interface with A2UI capability into `formcms-go`. At its backend, it integrates the Application Development Kit (ADK) using the `agentic` framework from `/home/innomon/orez/agentic`. 
+This specification outlines the integration of a Multimodal Chat interface with A2UI capability into `AiGen CMS`. At its backend, it integrates the Application Development Kit (ADK) using the `agentic` framework from `/home/innomon/orez/agentic`. 
 The system relies on configurable agent creation, internal capabilities mapped via function calling, and a deterministic Go-based router agent to delegate traffic to specialized sub-agents.
 
 ## Core Architectural Components

@@ -1,7 +1,7 @@
 # Specification: ERPNext Accounting Transformation
 
 ## Objective
-Translate the core ERPNext accounting DocTypes into the `formcms-go` framework's `Entity` and `Schema` system.
+Translate the core ERPNext accounting DocTypes into the `AiGen CMS` framework's `Entity` and `Schema` system.
 
 ## Scope
 The transformation includes the following core DocTypes:
@@ -23,7 +23,7 @@ The transformation includes the following core DocTypes:
 ### Field Type to DataType
 - `Data`, `Long Text`, `Small Text`, `Text` -> `String`
 - `Int`, `Check` -> `Int` (or `Boolean` for Check)
-- `Float`, `Currency` -> `Float` (Need to verify if `formcms-go` supports `Float`)
+- `Float`, `Currency` -> `Float` (Need to verify if `AiGen CMS` supports `Float`)
 - `Date`, `Datetime` -> `Datetime`
 - `Link` -> `Lookup`
 - `Table` -> `Collection`

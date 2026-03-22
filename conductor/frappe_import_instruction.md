@@ -1,6 +1,6 @@
-# Agent Instruction: Importing Frappe DocTypes to FormCMS-Go
+# Agent Instruction: Importing Frappe DocTypes to AiGen CMS
 
-This document serves as the Standard Operating Procedure (SOP) and execution plan for any AI coding agent tasked with importing a DocType from a Frappe/ERPNext application into the `formcms-go` framework.
+This document serves as the Standard Operating Procedure (SOP) and execution plan for any AI coding agent tasked with importing a DocType from a Frappe/ERPNext application into the `AiGen CMS` framework.
 
 ## 🎯 Core Objectives & Rules
 
@@ -28,7 +28,7 @@ This document serves as the Standard Operating Procedure (SOP) and execution pla
    Read the Frappe JSON to understand the fields, data types, mandatory constraints, and relational links (`options` targeting other DocTypes).
 
 ### Phase 2: Schema Translation (JSON Creation)
-Create a new JSON file in `formcms-go/apps/<module_name>/schemas/<doctype_snake_case>.json`.
+Create a new JSON file in `apps/<module_name>/schemas/<doctype_snake_case>.json`.
 
 **Translation Rules:**
 * **DocType -> Entity:** Map the DocType name directly to the `Entity` name (e.g., "Journal Entry" -> "JournalEntry").
@@ -43,7 +43,7 @@ Create a new JSON file in `formcms-go/apps/<module_name>/schemas/<doctype_snake_
   * Frappe `Link` ➔ FormCMS DataType: `Lookup`, Options: `<TargetEntityName>`
   * Frappe `Table` ➔ FormCMS DataType: `Collection`, Options: `<ChildEntityName>|<ParentLinkField>`
 
-**Example Schema (`formcms-go/apps/<module_name>/schemas/currency.json`):**
+**Example Schema (`apps/<module_name>/schemas/currency.json`):**
 ```json
 {
   "Name": "Currency",
@@ -58,13 +58,13 @@ Create a new JSON file in `formcms-go/apps/<module_name>/schemas/<doctype_snake_
 ```
 
 ### Phase 3: SQL Migration Generation
-Generate standard SQL migration files (e.g., `formcms-go/apps/<module_name>/migrations/001_initial_schema.sql`). 
+Generate standard SQL migration files (e.g., `apps/<module_name>/migrations/001_initial_schema.sql`). 
 1. Write the `CREATE TABLE` statements equivalent to the JSON schemas for PostgreSQL and SQLite.
 2. Include system columns: `id`, `created_at`, `updated_at`, `deleted`.
 3. Generate `INSERT INTO` statements containing baseline production data (if applicable, e.g., default Indian states, tax categories).
 
 ### Phase 4: Test Data Generation (Indian Locale)
-Create a JSON file in `formcms-go/apps/<module_name>/data/test_data.json`.
+Create a JSON file in `apps/<module_name>/data/test_data.json`.
 1. **Locale Requirements:** Use INR (`₹`), Indian addresses (Mumbai, Delhi), Indian tax logic (GST, SGST, CGST), and standard Indian corporate names.
 2. **Relational Data Mapping:** Use the application's built-in reference resolver to manage foreign keys in test data. Prefix referenced keys with `$Ref:`.
 
@@ -91,11 +91,11 @@ Create a JSON file in `formcms-go/apps/<module_name>/data/test_data.json`.
 ```
 
 ### Phase 5: Implementation & Wiring (Configuration)
-The `formcms-go` framework utilizes a fully configuration-driven initialization system for apps.
-1. Place the generated application module inside `formcms-go/apps/<module_name>`.
-2. Add the `<module_name>` to the `enabled_apps` array inside `formcms-go/apps/apps.json` so the core system knows to load the schemas, run migrations (if applicable), and process the test data during startup. Do NOT modify the Go source code.
+The `AiGen CMS` framework utilizes a fully configuration-driven initialization system for apps.
+1. Place the generated application module inside `apps/<module_name>`.
+2. Add the `<module_name>` to the `enabled_apps` array inside `apps/apps.json` so the core system knows to load the schemas, run migrations (if applicable), and process the test data during startup. Do NOT modify the Go source code.
 
-**Example Configuration (`formcms-go/apps/apps.json`):**
+**Example Configuration (`apps/apps.json`):**
 ```json
 {
   "enabled_apps": [
@@ -113,5 +113,5 @@ The `formcms-go` framework utilizes a fully configuration-driven initialization 
 2. Are all monetary values, companies, and date structures conforming to the **Indian locale**?
 3. Did I generate a corresponding `.sql` migration script?
 4. Is the Frappe source code appropriately isolated in `.gemini/tmp/temp_repos/`?
-5. Did I update `formcms-go/apps/apps.json` to enable the new module?
+5. Did I update `apps/apps.json` to enable the new module?
 6. Does the test server boot up and seed the configuration data without errors?

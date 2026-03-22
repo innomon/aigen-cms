@@ -8,7 +8,7 @@ Your objective when enhancing or creating an application is to ensure it is full
 
 ## 2. The `app_def.json` Manifest
 
-Every application must have an `app_def.json` file located at its root (e.g., `formcms-go/apps/{app_name}/app_def.json`).
+Every application must have an `app_def.json` file located at its root (e.g., `apps/{app_name}/app_def.json`).
 
 ### Structure Requirements:
 - **`name`**: The system name of the app (snake_case, matches the folder name).
@@ -79,5 +79,5 @@ When tasked with creating a new app or documenting an existing one, follow these
 1. **Analyze**: Use `codebase_investigator` to review the schemas and logic of the application.
 2. **Create `app_def.json`**: Generate the manifest in the app's root folder.
 3. **Write Context Files**: Identify complex entities and write corresponding Markdown files in the `docs/` directory.
-4. **Register**: Ensure the app's folder name is added to the `"enabled_apps"` array in `formcms-go/apps/apps.json`.
+4. **Register**: Ensure the app's folder name is added to the `"enabled_apps"` array in `apps/apps.json`.
 5. **Verify**: The resulting structure should enable the `cms_app_get` tool to automatically aggregate the `app_def.json` and all linked Markdown files into a single context payload.

@@ -1,7 +1,7 @@
-# FormCMS-Go: Agentic SDK, Chat, and A2UI Implementation Guide
+# AiGen CMS: Agentic SDK, Chat, and A2UI Implementation Guide
 
 ## 1. Overview
-The `formcms-go` project incorporates an AI-driven architecture to enhance how users interact with the CMS data and dashboard. By leveraging the **Agentic Development Kit (ADK)** (`google.golang.org/adk/agent`), the application implements a multi-agent system that seamlessly blends natural language chat interfaces with rich, dynamic User Interfaces generated on the fly (A2UI).
+The AiGen CMS framework incorporates an AI-driven architecture to enhance how users interact with the CMS data and dashboard. By leveraging the **Agentic Development Kit (ADK)** (`google.golang.org/adk/agent`), the application implements a multi-agent system that seamlessly blends natural language chat interfaces with rich, dynamic User Interfaces generated on the fly (A2UI).
 
 ## 2. Agentic SDK (ADK) Implementation
 
@@ -90,7 +90,7 @@ The A2UI layer is "security-aware". When the Agent fetches data to populate an A
 
 ## 5. App Capability Discovery
 
-To allow the Agent to dynamically discover and understand the purpose, roles, and entities of installed applications, `formcms-go` utilizes an expanded App Definition framework.
+To allow the Agent to dynamically discover and understand the purpose, roles, and entities of installed applications, AiGen CMS utilizes an expanded App Definition framework.
 
 ### 5.1. The `app_def.json` Specification
 Each application can define an `app_def.json` file in its root directory (e.g., `apps/erpnext_accounting/app_def.json`). This file acts as a manifest that provides the LLM with deep context:
