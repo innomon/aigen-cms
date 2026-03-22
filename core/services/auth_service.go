@@ -80,6 +80,25 @@ func (s *AuthService) Register(ctx context.Context, email, password string) (*de
 	return user, nil
 }
 
+func (s *AuthService) GetRoleByName(ctx context.Context, name string) (*descriptors.Role, error) {
+	query, args, err := s.dao.GetBuilder().Select("id", "name", "disabled", "dashboard_page_id", "menu_id").From("__roles").
+		Where(squirrel.Eq{"name": name}).Limit(1).ToSql()
+	if err != nil {
+		return nil, err
+	}
+
+	row := s.dao.GetDb().QueryRowContext(ctx, query, args...)
+	var role descriptors.Role
+	var dashboardPageId, menuId sql.NullString
+	if err := row.Scan(&role.Id, &role.Name, &role.Disabled, &dashboardPageId, &menuId); err != nil {
+		return nil, err
+	}
+	role.DashboardPageId = dashboardPageId.String
+	role.MenuId = menuId.String
+
+	return &role, nil
+}
+
 func (s *AuthService) getRoles(ctx context.Context, userId int64, legacyRole string) ([]string, []descriptors.Role, error) {
 	query, args, err := s.dao.GetBuilder().Select("r.id, r.name, r.disabled, r.dashboard_page_id, r.menu_id").From("__user_roles ur").
 		Join("__roles r ON ur.role_id = r.id").

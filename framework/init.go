@@ -207,19 +207,19 @@ func Start(cfg *Config) error {
 	rbacApi := api.NewRBACApi(entityService, authApi)
 	schemaApi := api.NewSchemaApi(schemaService, authApi)
 	entityApi := api.NewEntityApi(entityService, authApi)
-	graphqlApi := api.NewGraphQLApi(graphqlService)
-	queryApi := api.NewQueryApi(graphqlService)
+	graphqlApi := api.NewGraphQLApi(graphqlService, authApi)
+	queryApi := api.NewQueryApi(graphqlService, authApi)
 	assetApi := api.NewAssetApi(assetService)
-	engagementApi := api.NewEngagementApi(engagementService)
-	commentApi := api.NewCommentApi(commentService)
+	engagementApi := api.NewEngagementApi(engagementService, authApi)
+	commentApi := api.NewCommentApi(commentService, authApi)
 	notificationApi := api.NewNotificationApi(notificationService, authApi)
 	auditApi := api.NewAuditApi(auditService, authApi)
 	staticApi := api.NewStaticApi()
-	pageApi := api.NewPageApi(pageService)
-	a2uiApi := api.NewA2UIApi(a2uiService)
+	pageApi := api.NewPageApi(pageService, authService, authApi)
+	a2uiApi := api.NewA2UIApi(a2uiService, authApi)
 	var chatApi *api.ChatApi
 	if chatService != nil {
-		chatApi = api.NewChatApi(chatService)
+		chatApi = api.NewChatApi(chatService, authApi)
 	}
 
 	r := chi.NewRouter()

@@ -126,10 +126,15 @@ The core engine for access checks:
 * `GetFieldPermissions(userId, entityName, roleIds)`: Dictates which fields are readable/writable based on `PermLevel` matching.
 
 ### 5.2. Middlewares
-* **AuthMiddleware:** Authenticates the incoming request, parses the JWT, and loads the user ID and Roles into the HTTP Request Context.
-* **RBACMiddleware:** Intercepts route requests. Uses `PermissionService.HasAccess()` to verify if the Context user has the necessary `PermLevel 0` permissions for the target endpoint.
+* **AuthMiddleware:** Authenticates the incoming request, parses the JWT, and loads the user ID and Roles into the HTTP Request Context. If no valid authentication is provided, it assigns the user ID `0` and the `guest` role to allow anonymous access to permitted resources.
+* **RBACMiddleware:** Intercepts route requests. Uses `PermissionService.HasAccess()` to verify if the Context user has the necessary `PermLevel 0` permissions for the target endpoint. It supports entity-based access control as well as explicit resource names (e.g., `graphql`, `chat`, `a2ui`) to secure custom APIs.
 
-### 5.3. EntityService Integration
+### 5.3. Anonymous / Guest Access
+* **The Guest Role:** Anonymous users interacting with the system are assigned the `guest` role by the `AuthMiddleware`.
+* **Public APIs:** Open APIs like GraphQL, Stored Queries, Comments, Engagements, and A2UI are secured using `RBACMiddleware` with explicit resource names. Guests only have access to these APIs if the `guest` role is explicitly granted permissions for those resources in the RBAC configuration.
+* **Guest Dashboard:** The `guest` role can be configured with a `dashboard_page_id`. If a guest visits the root URL (`/`), the system will serve this custom dashboard page instead of redirecting to the admin login.
+
+### 5.4. EntityService Integration
 The `EntityService` integrates deeply with `PermissionService`:
 * **List/Single Queries:** Calls `GetRowFilters` before executing the underlying `squirrel` SQL builder to ensure Row-Level security.
 * **Data Scanning:** Uses `GetFieldPermissions` to strip unauthorized fields from the JSON response.

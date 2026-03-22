@@ -13,17 +13,23 @@ import (
 
 type CommentApi struct {
 	commentService services.ICommentService
+	authApi        *AuthApi
 }
 
-func NewCommentApi(commentService services.ICommentService) *CommentApi {
-	return &CommentApi{commentService: commentService}
+func NewCommentApi(commentService services.ICommentService, authApi *AuthApi) *CommentApi {
+	return &CommentApi{
+		commentService: commentService,
+		authApi:        authApi,
+	}
 }
 
 func (a *CommentApi) Register(r chi.Router) {
 	r.Route("/api/comments", func(r chi.Router) {
-		r.Get("/{entityName}/{recordId}", a.List)
-		r.Post("/", a.Save)
-		r.Delete("/{id}", a.Delete)
+		r.Use(a.authApi.JWTMiddleware)
+		
+		r.With(a.authApi.RBACMiddleware("read", "comments")).Get("/{entityName}/{recordId}", a.List)
+		r.With(a.authApi.RBACMiddleware("write", "comments")).Post("/", a.Save)
+		r.With(a.authApi.RBACMiddleware("delete", "comments")).Delete("/{id}", a.Delete)
 	})
 }
 

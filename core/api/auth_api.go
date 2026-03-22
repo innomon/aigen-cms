@@ -8,6 +8,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/formcms/formcms-go/core/services"
+	"github.com/formcms/formcms-go/core/descriptors"
 )
 
 type AuthApi struct {
@@ -91,6 +92,10 @@ func (a *AuthApi) DoLogout(w http.ResponseWriter, r *http.Request) {
 
 func (a *AuthApi) GetMe(w http.ResponseWriter, r *http.Request) {
 	userId := r.Context().Value("userId").(int64)
+	if userId == 0 {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
 	user, err := a.authService.Me(r.Context(), userId)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -118,15 +123,19 @@ func (a *AuthApi) JWTMiddleware(next http.Handler) http.Handler {
 			}
 		}
 
-		if tokenString == "" {
-			http.Error(w, "missing authorization token", http.StatusUnauthorized)
-			return
-		}
+		var userId int64
+		var roles []string
+		var err error
 
-		userId, roles, err := a.authService.ValidateToken(tokenString)
-		if err != nil {
-			http.Error(w, "invalid token", http.StatusUnauthorized)
-			return
+		if tokenString == "" {
+			userId = 0
+			roles = []string{descriptors.RoleGuest}
+		} else {
+			userId, roles, err = a.authService.ValidateToken(tokenString)
+			if err != nil {
+				http.Error(w, "invalid token", http.StatusUnauthorized)
+				return
+			}
 		}
 
 		ctx := context.WithValue(r.Context(), "userId", userId)
@@ -135,27 +144,33 @@ func (a *AuthApi) JWTMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-func (a *AuthApi) RBACMiddleware(action string) func(http.Handler) http.Handler {
+func (a *AuthApi) RBACMiddleware(action string, explicitResource ...string) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			userId, _ := r.Context().Value("userId").(int64)
 			roles, _ := r.Context().Value("roles").([]string)
-			entityName := chi.URLParam(r, "name")
 
-			if entityName == "" {
+			resourceName := ""
+			if len(explicitResource) > 0 {
+				resourceName = explicitResource[0]
+			} else {
+				resourceName = chi.URLParam(r, "name")
+			}
+
+			if resourceName == "" {
 				// If not entity-based route, maybe we can't check here
 				next.ServeHTTP(w, r)
 				return
 			}
 
-			hasAccess, err := a.permissionService.HasAccess(r.Context(), userId, roles, entityName, action)
+			hasAccess, err := a.permissionService.HasAccess(r.Context(), userId, roles, resourceName, action)
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
 			}
 
 			if !hasAccess {
-				http.Error(w, "forbidden", http.StatusForbidden)
+				http.Error(w, "Forbidden", http.StatusForbidden)
 				return
 			}
 

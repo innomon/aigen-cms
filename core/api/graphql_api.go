@@ -10,14 +10,22 @@ import (
 
 type GraphQLApi struct {
 	graphqlService services.IGraphQLService
+	authApi        *AuthApi
 }
 
-func NewGraphQLApi(graphqlService services.IGraphQLService) *GraphQLApi {
-	return &GraphQLApi{graphqlService: graphqlService}
+func NewGraphQLApi(graphqlService services.IGraphQLService, authApi *AuthApi) *GraphQLApi {
+	return &GraphQLApi{
+		graphqlService: graphqlService,
+		authApi:        authApi,
+	}
 }
 
 func (a *GraphQLApi) Register(r chi.Router) {
-	r.Post("/api/graphql", a.Query)
+	r.Route("/api/graphql", func(r chi.Router) {
+		r.Use(a.authApi.JWTMiddleware)
+		r.Use(a.authApi.RBACMiddleware("read", "graphql"))
+		r.Post("/", a.Query)
+	})
 }
 
 type graphqlRequest struct {

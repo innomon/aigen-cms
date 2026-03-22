@@ -11,16 +11,20 @@ import (
 
 type A2UIApi struct {
 	a2uiService services.IA2UIService
+	authApi     *AuthApi
 }
 
-func NewA2UIApi(a2uiService services.IA2UIService) *A2UIApi {
+func NewA2UIApi(a2uiService services.IA2UIService, authApi *AuthApi) *A2UIApi {
 	return &A2UIApi{
 		a2uiService: a2uiService,
+		authApi:     authApi,
 	}
 }
 
 func (a *A2UIApi) Register(r chi.Router) {
 	r.Route("/api/a2ui", func(r chi.Router) {
+		r.Use(a.authApi.JWTMiddleware)
+		r.Use(a.authApi.RBACMiddleware("read", "a2ui"))
 		r.Get("/stream", a.Stream)
 		r.Post("/action", a.Action)
 	})

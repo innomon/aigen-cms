@@ -10,14 +10,20 @@ import (
 
 type QueryApi struct {
 	graphqlService services.IGraphQLService
+	authApi        *AuthApi
 }
 
-func NewQueryApi(graphqlService services.IGraphQLService) *QueryApi {
-	return &QueryApi{graphqlService: graphqlService}
+func NewQueryApi(graphqlService services.IGraphQLService, authApi *AuthApi) *QueryApi {
+	return &QueryApi{
+		graphqlService: graphqlService,
+		authApi:        authApi,
+	}
 }
 
 func (a *QueryApi) Register(r chi.Router) {
 	r.Route("/api/queries/{name}", func(r chi.Router) {
+		r.Use(a.authApi.JWTMiddleware)
+		r.Use(a.authApi.RBACMiddleware("read", "queries"))
 		r.Get("/", a.Execute)
 		r.Post("/", a.ExecuteWithBody)
 	})

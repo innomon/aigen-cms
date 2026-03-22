@@ -11,14 +11,22 @@ import (
 
 type EngagementApi struct {
 	engagementService services.IEngagementService
+	authApi           *AuthApi
 }
 
-func NewEngagementApi(engagementService services.IEngagementService) *EngagementApi {
-	return &EngagementApi{engagementService: engagementService}
+func NewEngagementApi(engagementService services.IEngagementService, authApi *AuthApi) *EngagementApi {
+	return &EngagementApi{
+		engagementService: engagementService,
+		authApi:           authApi,
+	}
 }
 
 func (a *EngagementApi) Register(r chi.Router) {
-	r.Post("/api/engagements/track", a.Track)
+	r.Route("/api/engagements", func(r chi.Router) {
+		r.Use(a.authApi.JWTMiddleware)
+		r.Use(a.authApi.RBACMiddleware("write", "engagements"))
+		r.Post("/track", a.Track)
+	})
 }
 
 func (a *EngagementApi) Track(w http.ResponseWriter, r *http.Request) {

@@ -14,16 +14,20 @@ import (
 
 type ChatApi struct {
 	chatService *services.ChatService
+	authApi     *AuthApi
 }
 
-func NewChatApi(chatService *services.ChatService) *ChatApi {
+func NewChatApi(chatService *services.ChatService, authApi *AuthApi) *ChatApi {
 	return &ChatApi{
 		chatService: chatService,
+		authApi:     authApi,
 	}
 }
 
 func (a *ChatApi) Register(r chi.Router) {
 	r.Route("/api/chat", func(r chi.Router) {
+		r.Use(a.authApi.JWTMiddleware)
+		r.Use(a.authApi.RBACMiddleware("read", "chat"))
 		r.Post("/message", a.Message)
 	})
 }

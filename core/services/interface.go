@@ -61,6 +61,7 @@ type IAuthService interface {
 	Login(ctx context.Context, email, password string) (string, error)
 	Me(ctx context.Context, userId int64) (*descriptors.User, error)
 	ValidateToken(token string) (int64, []string, error)
+	GetRoleByName(ctx context.Context, name string) (*descriptors.Role, error)
 }
 
 type INotificationService interface {
