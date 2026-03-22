@@ -17,6 +17,7 @@ type Config struct {
 	Port              string                     `yaml:"port" json:"port"`
 	AgenticConfigPath string                     `yaml:"agentic_config_path" json:"agentic_config_path"`
 	Channels          descriptors.ChannelsConfig `yaml:"channels" json:"channels"`
+	MCP               descriptors.MCPConfig      `yaml:"mcp" json:"mcp"`
 }
 
 func DefaultConfig() *Config {

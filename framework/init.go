@@ -66,6 +66,7 @@ func Start(cfg *Config) error {
 		CREATE TABLE IF NOT EXISTS __user_channels (
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
 			user_id INTEGER NOT NULL,
+			agent_id TEXT,
 			channel_type TEXT NOT NULL,
 			identifier TEXT NOT NULL,
 			is_authenticated BOOLEAN DEFAULT 0,
@@ -136,6 +137,9 @@ func Start(cfg *Config) error {
 	if err != nil {
 		log.Printf("Warning: failed to initialize chat service (agentic config missing or invalid): %v", err)
 	}
+
+	a2aService := services.NewA2AService(chatService, cfg.Domain)
+	mcpService := services.NewMCPService(schemaService, entityService, authService, cfg.MCP)
 
 	// Initialize Prototype Components for A2UI
 	a2uiService.UpdateComponent(context.Background(), services.A2UIComponent{
@@ -239,6 +243,8 @@ func Start(cfg *Config) error {
 	notificationApi := api.NewNotificationApi(notificationService, authApi)
 	auditApi := api.NewAuditApi(auditService, authApi)
 	channelApi := api.NewChannelApi(channelService, authApi)
+	a2aApi := api.NewA2AApi(a2aService, authService, cfg.Channels)
+	mcpApi := api.NewMCPApi(mcpService)
 	staticApi := api.NewStaticApi()
 	pageApi := api.NewPageApi(pageService, authService, authApi)
 	a2uiApi := api.NewA2UIApi(a2uiService, authApi)
@@ -268,6 +274,8 @@ func Start(cfg *Config) error {
 	notificationApi.Register(r)
 	auditApi.Register(r)
 	channelApi.Register(r)
+	a2aApi.Register(r)
+	mcpApi.Register(r)
 	staticApi.Register(r)
 	pageApi.Register(r)
 	a2uiApi.Register(r)

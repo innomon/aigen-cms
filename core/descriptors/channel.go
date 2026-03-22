@@ -21,6 +21,7 @@ const AuthLogTableName = "__auth_logs"
 type UserChannel struct {
 	Id              int64       `json:"id" mapstructure:"id"`
 	UserId          int64       `json:"userId" mapstructure:"user_id"`
+	AgentID         string      `json:"agentId" mapstructure:"agent_id"` // A2A Agent ID
 	ChannelType     ChannelType `json:"channelType" mapstructure:"channel_type"`
 	Identifier      string      `json:"identifier" mapstructure:"identifier"`
 	IsAuthenticated bool        `json:"isAuthenticated" mapstructure:"is_authenticated"`
@@ -54,6 +55,11 @@ type GuestAccessConfig struct {
 	DefaultRole     string   `json:"default_role" mapstructure:"default_role"`
 }
 
+type TrustedKey struct {
+	Id        string `json:"id" mapstructure:"id"`
+	PublicKey string `json:"publicKey" mapstructure:"public_key"`
+}
+
 type ChannelsConfig struct {
 	WhatsApp    ChannelConfig     `json:"whatsapp" mapstructure:"whatsapp"`
 	Email       ChannelConfig     `json:"email" mapstructure:"email"`
@@ -62,4 +68,16 @@ type ChannelsConfig struct {
 	X           ChannelConfig     `json:"x" mapstructure:"x"`
 	Bluesky     ChannelConfig     `json:"bluesky" mapstructure:"bluesky"`
 	GuestAccess GuestAccessConfig `json:"guest_access" mapstructure:"guest_access"`
+	A2AEnabled  bool              `json:"a2aEnabled" mapstructure:"a2a_enabled"`
+	TrustedKeys []TrustedKey      `json:"trustedKeys" mapstructure:"trusted_keys"`
+}
+
+type APIKeyConfig struct {
+	Key    string `json:"key" mapstructure:"key"`
+	UserId int64  `json:"userId" mapstructure:"user_id"`
+}
+
+type MCPConfig struct {
+	Enabled bool           `json:"enabled" mapstructure:"enabled"`
+	APIKeys []APIKeyConfig `json:"apiKeys" mapstructure:"api_keys"`
 }

@@ -3,6 +3,9 @@ package services
 import (
 	"context"
 
+	"github.com/a2aproject/a2a-go/v2/a2a"
+	"github.com/a2aproject/a2a-go/v2/a2asrv"
+	"github.com/modelcontextprotocol/go-sdk/mcp"
 	"github.com/innomon/aigen-cms/core/descriptors"
 	"github.com/innomon/aigen-cms/utils/datamodels"
 )
@@ -97,4 +100,13 @@ type IChannelService interface {
 	GetAuthLogs(ctx context.Context, userId int64, pagination datamodels.Pagination) ([]*descriptors.AuthLog, int64, error)
 	SendNotification(ctx context.Context, userId int64, message string, preferredChannels []descriptors.ChannelType) error
 	HandleInbound(ctx context.Context, channelType descriptors.ChannelType, identifier string, payload map[string]interface{}) error
+}
+
+type IA2AService interface {
+	GetHandler() a2asrv.RequestHandler
+	GetAgentCard() *a2a.AgentCard
+}
+
+type IMCPService interface {
+	GetServer() *mcp.Server
 }

@@ -1,100 +1,64 @@
-# Multi-Channel Communication Setup Guide
+# Multi-Channel Communication Setup Guide (A2A & MCP)
 
-This guide provides instructions for setting up and configuring the multi-channel communication system in your `aigen-cms` powered application.
+This guide provides instructions for setting up and configuring the multi-channel communication system in your `aigen-cms` powered application using the A2A and MCP protocols.
 
 ## Prerequisites
 
-1.  **Aigen CMS Instance**: A running instance of `aigen-cms` (version with multi-channel support).
-2.  **External ADKs (for WhatsApp/Email)**:
-    -   **WhatsApp**: [whatsadk](https://github.com/innomon/whatsadk) gateway for Ed25519 JWT authentication.
-    -   **Email**: [mailadk](https://github.com/innomon/mailadk) for IMAP polling and email-based identity verification.
-3.  **Public Keys**: The public keys from your `whatsadk` and `mailadk` instances for JWT verification.
+1.  **Aigen CMS Instance**: A running instance of `aigen-cms`.
+2.  **External A2A Agents**: External agents (WhatsApp, Email gateways) must support the [A2A Protocol](https://github.com/a2aproject/A2A).
+3.  **MCP Clients**: External agents (e.g., Claude, custom co-workers) that wish to access CMS tools must support the [Model Context Protocol](https://modelcontextprotocol.io).
 
-## Step-by-Step Configuration
+## 1. A2A (Agent2Agent) Configuration
 
-### 1. Update `config.yaml`
+### Update `config.yaml`
 
-Enable and configure the channels you wish to support in your `config.yaml` file:
+Enable A2A and add public keys for trusted external agents:
 
 ```yaml
 channels:
-  whatsapp:
-    enabled: true
-    gateway_url: "https://your-whatsadk-gateway.com"
-    public_key: "YOUR_ED25519_PUBLIC_KEY_BASE64URL"
-  email:
-    enabled: true
-    imap_server: "imap.gmail.com"
-    verification_required: true
-  guest_access:
-    allowed_channels: ["whatsapp", "email"]
-    default_role: "guest"
+  a2a_enabled: true
+  trusted_keys:
+    - id: "whatsapp-gateway"
+      public_key: "YOUR_ED25519_PUBLIC_KEY_BASE64URL"
 ```
 
-### 2. User Profile Setup
+### A2A Authentication
+External agents must include an Ed25519-signed JWT in the `Authorization: Bearer <JWT>` header. The JWT must include:
+- `iss`: Matching the `id` in your `trusted_keys` config.
+- `sub`: The user identifier (or `guest`).
 
-Users can link their channel identities through the API. For example, to link a WhatsApp number:
+### A2A Endpoints
+- **JSON-RPC Invoke**: `POST /api/a2a`
+- **Agent Card**: `GET /.well-known/a2a-agent-card`
 
-**Endpoint**: `POST /api/channels`
-**Body**:
-```json
-{
-  "channelType": "whatsapp",
-  "identifier": "+1234567890",
-  "metadata": {
-    "preferred_name": "John Doe"
-  }
-}
+---
+
+## 2. MCP (Model Context Protocol) Configuration
+
+### Update `config.yaml`
+
+Enable the MCP server and configure API keys for external agents:
+
+```yaml
+mcp:
+  enabled: true
+  api_keys:
+    - key: "cms_mcp_test_key_123"
+      user_id: 1 # System user with "MCP" role
 ```
 
-### 3. Channel Verification
+### Role Setup
+Ensure the `user_id` linked to the API key has the **"MCP" role**. This role gates access to the tools exposed by the MCP server.
 
-Once a channel is registered, it must be verified. For WhatsApp, this typically involves sending an `AUTH` message to the `whatsadk` gateway to receive a JWT.
+### MCP Endpoints
+- **SSE Connection**: `GET /api/mcp/sse?apiKey=...`
+- **Authentication**: Use `X-API-Key` header or `apiKey` query parameter.
 
-**Endpoint**: `POST /api/channels/verify`
-**Body**:
-```json
-{
-  "channelType": "whatsapp",
-  "token": "YOUR_RECEIVED_JWT_TOKEN"
-}
-```
+### Exposed Tools
+- `list_entities`: Lists all available CMS entities.
+- `get_entity_records`: Fetches records for a specific entity.
 
-### 4. Authenticating via Channel
+---
 
-Users can log in directly using a verified channel token:
-
-**Endpoint**: `POST /api/auth/login/channel`
-**Body**:
-```json
-{
-  "channelType": "whatsapp",
-  "identifier": "+1234567890",
-  "token": "YOUR_RECEIVED_JWT_TOKEN"
-}
-```
-
-### 5. Monitoring E-trail Logs
-
-You can view the authentication history and secure audit trail for non-repudiation:
-
-**Endpoint**: `GET /api/channels/logs?limit=10&offset=0`
-
-## Implementation for Downstream Apps
-
-If you are building an app on top of the `aigen-cms` framework:
-
-1.  **Inject the Service**: The `ChannelService` is automatically initialized if configurations are present in `config.yaml`.
-2.  **Send Notifications**: Use the `SendNotification` method in `IChannelService` to reach users across multiple platforms.
-    ```go
-    err := channelService.SendNotification(ctx, userId, "Your order #123 has been shipped!", []descriptors.ChannelType{descriptors.ChannelWhatsApp, descriptors.ChannelEmail})
-    ```
-3.  **Handle Inbound**: Implement custom logic for `HandleInbound` if you need to process platform-specific messages (e.g., "TRACK ORDER").
-
-## Supported Channels
-- **WhatsApp**: (via whatsadk)
-- **Email**: (via mailadk)
-- **Signal**
-- **Telegram**
-- **X (Twitter)**
-- **Bluesky**
+## E-trail Logging
+All A2A and MCP interactions are logged in the `__auth_logs` table for non-repudiation, including IP addresses, User Agents, and success status.
