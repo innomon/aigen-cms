@@ -2,6 +2,7 @@
   "enabled_apps": [
     "rbac",
     "erpnext_accounting",
-    "crm"
+    "crm",
+    "multi_channel"
   ]
 }
