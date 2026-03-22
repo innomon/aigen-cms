@@ -10,10 +10,10 @@ import (
 	"strings"
 
 	"github.com/Masterminds/squirrel"
-	"github.com/formcms/formcms-go/core/descriptors"
-	"github.com/formcms/formcms-go/core/services"
-	"github.com/formcms/formcms-go/infrastructure/relationdbdao"
-	"github.com/formcms/formcms-go/utils/datamodels"
+	"github.com/innomon/aigen-cms/core/descriptors"
+	"github.com/innomon/aigen-cms/core/services"
+	"github.com/innomon/aigen-cms/infrastructure/relationdbdao"
+	"github.com/innomon/aigen-cms/utils/datamodels"
 )
 
 func isTableExistsError(err error) bool {

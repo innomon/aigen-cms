@@ -5,8 +5,8 @@ import (
 	"os"
 	"testing"
 
-	"github.com/formcms/formcms-go/core/descriptors"
-	"github.com/formcms/formcms-go/infrastructure/relationdbdao"
+	"github.com/innomon/aigen-cms/core/descriptors"
+	"github.com/innomon/aigen-cms/infrastructure/relationdbdao"
 	"github.com/stretchr/testify/assert"
 )
 

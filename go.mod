@@ -1,4 +1,4 @@
-module github.com/formcms/formcms-go
+module github.com/innomon/aigen-cms
 
 go 1.25.6
 

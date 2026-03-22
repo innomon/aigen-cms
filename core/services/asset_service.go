@@ -17,10 +17,10 @@ import (
 
 	"github.com/Masterminds/squirrel"
 	"github.com/disintegration/imaging"
-	"github.com/formcms/formcms-go/core/descriptors"
-	"github.com/formcms/formcms-go/infrastructure/filestore"
-	"github.com/formcms/formcms-go/infrastructure/relationdbdao"
-	"github.com/formcms/formcms-go/utils/datamodels"
+	"github.com/innomon/aigen-cms/core/descriptors"
+	"github.com/innomon/aigen-cms/infrastructure/filestore"
+	"github.com/innomon/aigen-cms/infrastructure/relationdbdao"
+	"github.com/innomon/aigen-cms/utils/datamodels"
 	gonanoid "github.com/matoous/go-nanoid/v2"
 )
 

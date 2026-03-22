@@ -3,7 +3,7 @@ package relationdbdao
 import (
 	"fmt"
 
-	"github.com/formcms/formcms-go/core/descriptors"
+	"github.com/innomon/aigen-cms/core/descriptors"
 )
 
 func CreateDao(provider descriptors.DatabaseProvider, connectionString string) (IPrimaryDao, error) {

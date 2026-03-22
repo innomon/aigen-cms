@@ -3,7 +3,7 @@ package services
 import (
 	"fmt"
 
-	"github.com/formcms/formcms-go/core/agentic/agents"
+	"github.com/innomon/aigen-cms/core/agentic/agents"
 	"github.com/innomon/agentic/pkg/config"
 	"github.com/innomon/agentic/pkg/registry"
 	"google.golang.org/adk/session"

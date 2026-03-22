@@ -1,7 +1,7 @@
 package descriptors
 
 import (
-	"github.com/formcms/formcms-go/utils/displaymodels"
+	"github.com/innomon/aigen-cms/utils/displaymodels"
 )
 
 type Attribute struct {

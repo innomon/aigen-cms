@@ -6,8 +6,8 @@ import (
 	"strings"
 
 	"github.com/aymerick/raymond"
-	"github.com/formcms/formcms-go/core/descriptors"
-	"github.com/formcms/formcms-go/utils/datamodels"
+	"github.com/innomon/aigen-cms/core/descriptors"
+	"github.com/innomon/aigen-cms/utils/datamodels"
 )
 
 type PageService struct {

@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/Masterminds/squirrel"
-	"github.com/formcms/formcms-go/utils/datamodels"
+	"github.com/innomon/aigen-cms/utils/datamodels"
 	_ "github.com/lib/pq"
 )
 

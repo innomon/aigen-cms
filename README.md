@@ -43,7 +43,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/formcms/formcms-go/framework"
+	"github.com/innomon/aigen-cms/framework"
 )
 
 func main() {

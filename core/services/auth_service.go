@@ -8,8 +8,8 @@ import (
 	"time"
 
 	"github.com/Masterminds/squirrel"
-	"github.com/formcms/formcms-go/core/descriptors"
-	"github.com/formcms/formcms-go/infrastructure/relationdbdao"
+	"github.com/innomon/aigen-cms/core/descriptors"
+	"github.com/innomon/aigen-cms/infrastructure/relationdbdao"
 	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
 )

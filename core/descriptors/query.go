@@ -1,7 +1,7 @@
 package descriptors
 
 import (
-	"github.com/formcms/formcms-go/utils/datamodels"
+	"github.com/innomon/aigen-cms/utils/datamodels"
 )
 
 type Variable struct {

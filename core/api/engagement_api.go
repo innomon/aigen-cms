@@ -5,8 +5,8 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/formcms/formcms-go/core/descriptors"
-	"github.com/formcms/formcms-go/core/services"
+	"github.com/innomon/aigen-cms/core/descriptors"
+	"github.com/innomon/aigen-cms/core/services"
 )
 
 type EngagementApi struct {

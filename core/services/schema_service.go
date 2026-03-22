@@ -8,8 +8,8 @@ import (
 	"time"
 
 	"github.com/Masterminds/squirrel"
-	"github.com/formcms/formcms-go/core/descriptors"
-	"github.com/formcms/formcms-go/infrastructure/relationdbdao"
+	"github.com/innomon/aigen-cms/core/descriptors"
+	"github.com/innomon/aigen-cms/infrastructure/relationdbdao"
 	gonanoid "github.com/matoous/go-nanoid/v2"
 )
 

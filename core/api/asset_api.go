@@ -6,7 +6,7 @@ import (
 	"strconv"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/formcms/formcms-go/core/services"
+	"github.com/innomon/aigen-cms/core/services"
 )
 
 type AssetApi struct {
