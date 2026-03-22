@@ -33,7 +33,7 @@ func isExternalDomain(domain string) bool {
 
 func Start(cfg *Config) error {
 	// Initialize Database
-	dao, err := relationdbdao.CreateDao(descriptors.DatabaseType(cfg.DatabaseType), cfg.DatabaseDSN)
+	dao, err := relationdbdao.CreateDao(descriptors.DatabaseProvider(cfg.DatabaseType), cfg.DatabaseDSN)
 	if err != nil {
 		return fmt.Errorf("failed to create dao: %w", err)
 	}

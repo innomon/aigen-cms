@@ -21,7 +21,7 @@ func DefaultConfig() *Config {
 	return &Config{
 		AppsDir:           "apps",
 		WWWRoot:           "wwwroot",
-		DatabaseType:      "sqlite3",
+		DatabaseType:      "SQLite",
 		DatabaseDSN:       "formcms.db",
 		Port:              "5000",
 		AgenticConfigPath: "agentic.yaml",
