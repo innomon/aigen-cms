@@ -63,6 +63,29 @@ func Start(cfg *Config) error {
 			created_at DATETIME,
 			updated_at DATETIME
 		);
+		CREATE TABLE IF NOT EXISTS __user_channels (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			user_id INTEGER NOT NULL,
+			channel_type TEXT NOT NULL,
+			identifier TEXT NOT NULL,
+			is_authenticated BOOLEAN DEFAULT 0,
+			metadata TEXT,
+			created_at DATETIME,
+			updated_at DATETIME,
+			FOREIGN KEY (user_id) REFERENCES __users(id)
+		);
+		CREATE TABLE IF NOT EXISTS __auth_logs (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			user_id INTEGER,
+			channel_type TEXT NOT NULL,
+			action TEXT NOT NULL,
+			ip_address TEXT,
+			user_agent TEXT,
+			success BOOLEAN,
+			metadata TEXT,
+			created_at DATETIME,
+			FOREIGN KEY (user_id) REFERENCES __users(id)
+		);
 	`)
 	if err != nil {
 		return fmt.Errorf("failed to create core tables: %w", err)
@@ -102,8 +125,9 @@ func Start(cfg *Config) error {
 	assetService := services.NewAssetService(dao, fileStore, systemSettings)
 	engagementService := services.NewEngagementService(dao)
 	commentService := services.NewCommentService(dao)
-	authService := services.NewAuthService(dao, "your-secret-key")
 	notificationService := services.NewNotificationService(dao)
+	channelService := services.NewChannelService(dao, cfg.Channels)
+	authService := services.NewAuthService(dao, "your-secret-key", channelService)
 	auditService := services.NewAuditService(dao)
 	pageService := services.NewPageService(schemaService, graphqlService)
 	a2uiService := services.NewA2UIService()
@@ -214,6 +238,7 @@ func Start(cfg *Config) error {
 	commentApi := api.NewCommentApi(commentService, authApi)
 	notificationApi := api.NewNotificationApi(notificationService, authApi)
 	auditApi := api.NewAuditApi(auditService, authApi)
+	channelApi := api.NewChannelApi(channelService, authApi)
 	staticApi := api.NewStaticApi()
 	pageApi := api.NewPageApi(pageService, authService, authApi)
 	a2uiApi := api.NewA2UIApi(a2uiService, authApi)
@@ -242,6 +267,7 @@ func Start(cfg *Config) error {
 	rbacApi.Register(r)
 	notificationApi.Register(r)
 	auditApi.Register(r)
+	channelApi.Register(r)
 	staticApi.Register(r)
 	pageApi.Register(r)
 	a2uiApi.Register(r)

@@ -59,8 +59,10 @@ type ICommentService interface {
 type IAuthService interface {
 	Register(ctx context.Context, email, password string) (*descriptors.User, error)
 	Login(ctx context.Context, email, password string) (string, error)
+	LoginByChannel(ctx context.Context, channelType descriptors.ChannelType, identifier string, token string, ip, ua string) (string, error)
 	Me(ctx context.Context, userId int64) (*descriptors.User, error)
 	ValidateToken(token string) (int64, []string, error)
+	ValidateChannelToken(ctx context.Context, channelType descriptors.ChannelType, token string) (int64, string, error)
 	GetRoleByName(ctx context.Context, name string) (*descriptors.Role, error)
 }
 
@@ -85,4 +87,14 @@ type IPermissionService interface {
 	HasAccess(ctx context.Context, userId int64, roles []string, entityName, action string) (bool, error)
 	GetRowFilters(ctx context.Context, userId int64, entityName string) ([]datamodels.Filter, error)
 	GetFieldPermissions(ctx context.Context, entityName string, roles []string) (map[string]map[string]bool, error)
+}
+
+type IChannelService interface {
+	RegisterChannel(ctx context.Context, userId int64, channelType descriptors.ChannelType, identifier string, metadata map[string]interface{}) (*descriptors.UserChannel, error)
+	VerifyChannel(ctx context.Context, userId int64, channelType descriptors.ChannelType, token string) (bool, error)
+	GetChannelsByUserId(ctx context.Context, userId int64) ([]*descriptors.UserChannel, error)
+	LogAuthAttempt(ctx context.Context, log *descriptors.AuthLog) error
+	GetAuthLogs(ctx context.Context, userId int64, pagination datamodels.Pagination) ([]*descriptors.AuthLog, int64, error)
+	SendNotification(ctx context.Context, userId int64, message string, preferredChannels []descriptors.ChannelType) error
+	HandleInbound(ctx context.Context, channelType descriptors.ChannelType, identifier string, payload map[string]interface{}) error
 }

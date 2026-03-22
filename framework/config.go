@@ -4,17 +4,19 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/innomon/aigen-cms/core/descriptors"
 	yaml "gopkg.in/yaml.v3"
 )
 
 type Config struct {
-	AppsDir           string `yaml:"apps_dir" json:"apps_dir"`
-	WWWRoot           string `yaml:"www_root" json:"www_root"`
-	DatabaseType      string `yaml:"database_type" json:"database_type"`
-	DatabaseDSN       string `yaml:"database_dsn" json:"database_dsn"`
-	Domain            string `yaml:"domain" json:"domain"`
-	Port              string `yaml:"port" json:"port"`
-	AgenticConfigPath string `yaml:"agentic_config_path" json:"agentic_config_path"`
+	AppsDir           string                     `yaml:"apps_dir" json:"apps_dir"`
+	WWWRoot           string                     `yaml:"www_root" json:"www_root"`
+	DatabaseType      string                     `yaml:"database_type" json:"database_type"`
+	DatabaseDSN       string                     `yaml:"database_dsn" json:"database_dsn"`
+	Domain            string                     `yaml:"domain" json:"domain"`
+	Port              string                     `yaml:"port" json:"port"`
+	AgenticConfigPath string                     `yaml:"agentic_config_path" json:"agentic_config_path"`
+	Channels          descriptors.ChannelsConfig `yaml:"channels" json:"channels"`
 }
 
 func DefaultConfig() *Config {

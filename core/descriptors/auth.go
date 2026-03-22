@@ -28,7 +28,8 @@ type User struct {
 	Roles         []string  `json:"roles" mapstructure:"roles"`
 	RolesDetails  []Role    `json:"rolesDetails,omitempty"`
 	DefaultRoleId *int64    `json:"defaultRoleId,omitempty" mapstructure:"default_role_id"`
-	AvatarPath    string    `json:"avatarPath" mapstructure:"avatar_path"`
-	CreatedAt     time.Time `json:"createdAt" mapstructure:"created_at"`
-	UpdatedAt     time.Time `json:"updatedAt" mapstructure:"updated_at"`
+	AvatarPath    string         `json:"avatarPath" mapstructure:"avatar_path"`
+	Channels      []UserChannel  `json:"channels,omitempty" mapstructure:"channels"`
+	CreatedAt     time.Time      `json:"createdAt" mapstructure:"created_at"`
+	UpdatedAt     time.Time      `json:"updatedAt" mapstructure:"updated_at"`
 }

@@ -27,6 +27,7 @@ func (a *AuthApi) Register(r chi.Router) {
 	r.Route("/api/auth", func(r chi.Router) {
 		r.Post("/register", a.DoRegister)
 		r.Post("/login", a.DoLogin)
+		r.Post("/login/channel", a.DoLoginByChannel)
 		r.With(a.JWTMiddleware).Get("/me", a.GetMe)
 	})
 
@@ -142,6 +143,38 @@ func (a *AuthApi) JWTMiddleware(next http.Handler) http.Handler {
 		ctx = context.WithValue(ctx, "roles", roles)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
+}
+
+type channelAuthRequest struct {
+	ChannelType descriptors.ChannelType `json:"channelType"`
+	Identifier  string                  `json:"identifier"`
+	Token       string                  `json:"token"`
+}
+
+func (a *AuthApi) DoLoginByChannel(w http.ResponseWriter, r *http.Request) {
+	var req channelAuthRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	ip := r.RemoteAddr
+	ua := r.UserAgent()
+
+	token, err := a.authService.LoginByChannel(r.Context(), req.ChannelType, req.Identifier, req.Token, ip, ua)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusUnauthorized)
+		return
+	}
+
+	http.SetCookie(w, &http.Cookie{
+		Name:     "token",
+		Value:    token,
+		Path:     "/",
+		HttpOnly: true,
+	})
+
+	json.NewEncoder(w).Encode(map[string]string{"token": token})
 }
 
 func (a *AuthApi) RBACMiddleware(action string, explicitResource ...string) func(http.Handler) http.Handler {
