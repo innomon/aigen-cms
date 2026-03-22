@@ -1,0 +1,31 @@
+{
+  "attributes": [
+    {
+      "field": "industry",
+      "header": "Industry Name",
+      "dataType": "String",
+      "displayType": "Text",
+      "inList": true,
+      "inDetail": true,
+      "isDefault": false,
+      "options": "",
+      "validation": "",
+      "permLevel": 0
+    }
+  ],
+  "name": "CRMIndustry",
+  "displayName": "CRM Industry",
+  "tableName": "crm_industry",
+  "labelAttributeName": "industry",
+  "primaryKey": "id",
+  "defaultPageSize": 0,
+  "defaultPublicationStatus": "",
+  "pageUrl": "",
+  "tagsQuery": "",
+  "tagsQueryParam": "",
+  "titleTagField": "",
+  "subtitleTagField": "",
+  "contentTagField": "",
+  "imageTagField": "",
+  "publishTimeTagField": ""
+}

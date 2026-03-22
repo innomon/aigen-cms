@@ -1,0 +1,43 @@
+{
+  "attributes": [
+    {
+      "field": "user_id",
+      "header": "User ID",
+      "dataType": "Int",
+      "displayType": "Number",
+      "inList": true,
+      "inDetail": true,
+      "isDefault": false,
+      "options": "",
+      "validation": "",
+      "permLevel": 0
+    },
+    {
+      "field": "role_id",
+      "header": "Role",
+      "dataType": "Lookup",
+      "displayType": "",
+      "inList": true,
+      "inDetail": true,
+      "isDefault": false,
+      "options": "Role",
+      "validation": "",
+      "permLevel": 0
+    }
+  ],
+  "name": "UserRole",
+  "displayName": "User Role",
+  "tableName": "__user_roles",
+  "labelAttributeName": "id",
+  "primaryKey": "id",
+  "defaultPageSize": 0,
+  "defaultPublicationStatus": "",
+  "pageUrl": "",
+  "tagsQuery": "",
+  "tagsQueryParam": "",
+  "titleTagField": "",
+  "subtitleTagField": "",
+  "contentTagField": "",
+  "imageTagField": "",
+  "publishTimeTagField": ""
+}

@@ -1,0 +1,67 @@
+{
+  "attributes": [
+    {
+      "field": "currency_name",
+      "header": "Currency",
+      "dataType": "String",
+      "displayType": "Text",
+      "inList": true,
+      "inDetail": true,
+      "isDefault": false,
+      "options": "",
+      "validation": "",
+      "permLevel": 0
+    },
+    {
+      "field": "symbol",
+      "header": "Symbol",
+      "dataType": "String",
+      "displayType": "Text",
+      "inList": true,
+      "inDetail": true,
+      "isDefault": false,
+      "options": "",
+      "validation": "",
+      "permLevel": 0
+    },
+    {
+      "field": "fraction",
+      "header": "Fraction",
+      "dataType": "String",
+      "displayType": "Text",
+      "inList": false,
+      "inDetail": false,
+      "isDefault": false,
+      "options": "",
+      "validation": "",
+      "permLevel": 0
+    },
+    {
+      "field": "fraction_units",
+      "header": "Fraction Units",
+      "dataType": "Int",
+      "displayType": "Number",
+      "inList": false,
+      "inDetail": false,
+      "isDefault": false,
+      "options": "",
+      "validation": "",
+      "permLevel": 0
+    }
+  ],
+  "name": "Currency",
+  "displayName": "Currency",
+  "tableName": "currency",
+  "labelAttributeName": "currency_name",
+  "primaryKey": "id",
+  "defaultPageSize": 0,
+  "defaultPublicationStatus": "",
+  "pageUrl": "",
+  "tagsQuery": "",
+  "tagsQueryParam": "",
+  "titleTagField": "",
+  "subtitleTagField": "",
+  "contentTagField": "",
+  "imageTagField": "",
+  "publishTimeTagField": ""
+}

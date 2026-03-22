@@ -1,0 +1,91 @@
+{
+  "attributes": [
+    {
+      "field": "product_code",
+      "header": "Product Code",
+      "dataType": "String",
+      "displayType": "Text",
+      "inList": true,
+      "inDetail": true,
+      "isDefault": false,
+      "options": "",
+      "validation": "",
+      "permLevel": 0
+    },
+    {
+      "field": "product_name",
+      "header": "Product Name",
+      "dataType": "String",
+      "displayType": "Text",
+      "inList": true,
+      "inDetail": true,
+      "isDefault": false,
+      "options": "",
+      "validation": "",
+      "permLevel": 0
+    },
+    {
+      "field": "disabled",
+      "header": "Disabled",
+      "dataType": "Boolean",
+      "displayType": "Checkbox",
+      "inList": true,
+      "inDetail": true,
+      "isDefault": false,
+      "options": "",
+      "validation": "",
+      "permLevel": 0
+    },
+    {
+      "field": "image",
+      "header": "Image",
+      "dataType": "String",
+      "displayType": "Image",
+      "inList": false,
+      "inDetail": true,
+      "isDefault": false,
+      "options": "",
+      "validation": "",
+      "permLevel": 0
+    },
+    {
+      "field": "description",
+      "header": "Description",
+      "dataType": "Text",
+      "displayType": "Editor",
+      "inList": false,
+      "inDetail": true,
+      "isDefault": false,
+      "options": "",
+      "validation": "",
+      "permLevel": 0
+    },
+    {
+      "field": "standard_rate",
+      "header": "Standard Rate",
+      "dataType": "Float",
+      "displayType": "Number",
+      "inList": true,
+      "inDetail": true,
+      "isDefault": false,
+      "options": "",
+      "validation": "",
+      "permLevel": 0
+    }
+  ],
+  "name": "CRMProduct",
+  "displayName": "CRM Product",
+  "tableName": "crm_product",
+  "labelAttributeName": "product_name",
+  "primaryKey": "id",
+  "defaultPageSize": 0,
+  "defaultPublicationStatus": "",
+  "pageUrl": "",
+  "tagsQuery": "",
+  "tagsQueryParam": "",
+  "titleTagField": "",
+  "subtitleTagField": "",
+  "contentTagField": "",
+  "imageTagField": "",
+  "publishTimeTagField": ""
+}

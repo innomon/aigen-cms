@@ -1,7 +1,0 @@
-{
-  "enabled_apps": [
-    "rbac",
-    "erpnext_accounting",
-    "crm"
-  ]
-}

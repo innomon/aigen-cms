@@ -1,0 +1,103 @@
+{
+  "attributes": [
+    {
+      "field": "account_name",
+      "header": "Account Name",
+      "dataType": "String",
+      "displayType": "Text",
+      "inList": true,
+      "inDetail": true,
+      "isDefault": false,
+      "options": "",
+      "validation": "",
+      "permLevel": 0
+    },
+    {
+      "field": "account_number",
+      "header": "Account Number",
+      "dataType": "String",
+      "displayType": "Text",
+      "inList": true,
+      "inDetail": true,
+      "isDefault": false,
+      "options": "",
+      "validation": "",
+      "permLevel": 0
+    },
+    {
+      "field": "is_group",
+      "header": "Is Group",
+      "dataType": "Boolean",
+      "displayType": "Text",
+      "inList": true,
+      "inDetail": true,
+      "isDefault": false,
+      "options": "",
+      "validation": "",
+      "permLevel": 0
+    },
+    {
+      "field": "company",
+      "header": "Company",
+      "dataType": "Lookup",
+      "displayType": "Lookup",
+      "inList": true,
+      "inDetail": true,
+      "isDefault": false,
+      "options": "Company",
+      "validation": "",
+      "permLevel": 0
+    },
+    {
+      "field": "root_type",
+      "header": "Root Type",
+      "dataType": "String",
+      "displayType": "Dropdown",
+      "inList": true,
+      "inDetail": true,
+      "isDefault": false,
+      "options": "Asset,Liability,Income,Expense,Equity",
+      "validation": "",
+      "permLevel": 0
+    },
+    {
+      "field": "parent_account",
+      "header": "Parent Account",
+      "dataType": "Lookup",
+      "displayType": "Lookup",
+      "inList": true,
+      "inDetail": true,
+      "isDefault": false,
+      "options": "Account",
+      "validation": "",
+      "permLevel": 0
+    },
+    {
+      "field": "account_type",
+      "header": "Account Type",
+      "dataType": "String",
+      "displayType": "Dropdown",
+      "inList": true,
+      "inDetail": true,
+      "isDefault": false,
+      "options": "Bank,Cash,Payable,Receivable,Stock,Tax",
+      "validation": "",
+      "permLevel": 0
+    }
+  ],
+  "name": "Account",
+  "displayName": "Account",
+  "tableName": "account",
+  "labelAttributeName": "account_name",
+  "primaryKey": "id",
+  "defaultPageSize": 0,
+  "defaultPublicationStatus": "",
+  "pageUrl": "",
+  "tagsQuery": "",
+  "tagsQueryParam": "",
+  "titleTagField": "",
+  "subtitleTagField": "",
+  "contentTagField": "",
+  "imageTagField": "",
+  "publishTimeTagField": ""
+}

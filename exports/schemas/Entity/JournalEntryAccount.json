@@ -1,0 +1,91 @@
+{
+  "attributes": [
+    {
+      "field": "parent",
+      "header": "Journal Entry",
+      "dataType": "Lookup",
+      "displayType": "Lookup",
+      "inList": false,
+      "inDetail": false,
+      "isDefault": false,
+      "options": "JournalEntry",
+      "validation": "",
+      "permLevel": 0
+    },
+    {
+      "field": "account",
+      "header": "Account",
+      "dataType": "Lookup",
+      "displayType": "Lookup",
+      "inList": true,
+      "inDetail": true,
+      "isDefault": false,
+      "options": "Account",
+      "validation": "",
+      "permLevel": 0
+    },
+    {
+      "field": "debit",
+      "header": "Debit",
+      "dataType": "Float",
+      "displayType": "Number",
+      "inList": true,
+      "inDetail": true,
+      "isDefault": false,
+      "options": "",
+      "validation": "",
+      "permLevel": 0
+    },
+    {
+      "field": "credit",
+      "header": "Credit",
+      "dataType": "Float",
+      "displayType": "Number",
+      "inList": true,
+      "inDetail": true,
+      "isDefault": false,
+      "options": "",
+      "validation": "",
+      "permLevel": 0
+    },
+    {
+      "field": "cost_center",
+      "header": "Cost Center",
+      "dataType": "Lookup",
+      "displayType": "Lookup",
+      "inList": false,
+      "inDetail": false,
+      "isDefault": false,
+      "options": "CostCenter",
+      "validation": "",
+      "permLevel": 0
+    },
+    {
+      "field": "user_remark",
+      "header": "User Remark",
+      "dataType": "String",
+      "displayType": "Text",
+      "inList": false,
+      "inDetail": false,
+      "isDefault": false,
+      "options": "",
+      "validation": "",
+      "permLevel": 0
+    }
+  ],
+  "name": "JournalEntryAccount",
+  "displayName": "Journal Entry Account",
+  "tableName": "journal_entry_account",
+  "labelAttributeName": "account",
+  "primaryKey": "id",
+  "defaultPageSize": 0,
+  "defaultPublicationStatus": "",
+  "pageUrl": "",
+  "tagsQuery": "",
+  "tagsQueryParam": "",
+  "titleTagField": "",
+  "subtitleTagField": "",
+  "contentTagField": "",
+  "imageTagField": "",
+  "publishTimeTagField": ""
+}
