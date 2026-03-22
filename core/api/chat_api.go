@@ -7,9 +7,6 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/innomon/aigen-cms/core/services"
-	"google.golang.org/adk/agent"
-	"google.golang.org/adk/runner"
-	"google.golang.org/genai"
 )
 
 type ChatApi struct {
@@ -50,58 +47,15 @@ func (a *ChatApi) Message(w http.ResponseWriter, r *http.Request) {
 
 	ctx := r.Context()
 	
-	// Get Root Agent
-	rootAgent, err := a.chatService.Registry.GetRoot(ctx)
+	resp, err := a.chatService.ProcessMessage(ctx, req.Message, nil)
 	if err != nil {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(ChatResponse{Error: fmt.Sprintf("failed to get root agent: %v", err)})
+		json.NewEncoder(w).Encode(ChatResponse{Error: fmt.Sprintf("agent error: %v", err)})
 		return
-	}
-
-	// Create Runner
-	rnr, err := runner.New(runner.Config{
-		AppName:        "AiGenCMS",
-		Agent:          rootAgent,
-		SessionService: a.chatService.SessionService,
-	})
-	if err != nil {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(ChatResponse{Error: fmt.Sprintf("failed to create runner: %v", err)})
-		return
-	}
-
-	userContent := &genai.Content{
-		Role: "user",
-		Parts: []*genai.Part{
-			{Text: req.Message},
-		},
-	}
-	
-	// Use a fixed session ID for now, or generate one
-	sessionID := "default-session"
-	userID := "default-user"
-
-	var finalResponse string
-	for evt, err := range rnr.Run(ctx, userID, sessionID, userContent, agent.RunConfig{}) {
-		if err != nil {
-			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusInternalServerError)
-			json.NewEncoder(w).Encode(ChatResponse{Error: fmt.Sprintf("agent error: %v", err)})
-			return
-		}
-
-		if evt.Content != nil {
-			for _, part := range evt.Content.Parts {
-				if part.Text != "" {
-					finalResponse += part.Text
-				}
-			}
-		}
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(ChatResponse{Response: finalResponse})
+	json.NewEncoder(w).Encode(ChatResponse{Response: resp})
 }

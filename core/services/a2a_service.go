@@ -7,7 +7,6 @@ import (
 
 	"github.com/a2aproject/a2a-go/v2/a2a"
 	"github.com/a2aproject/a2a-go/v2/a2asrv"
-	"github.com/innomon/aigen-cms/core/descriptors"
 )
 
 type A2AService struct {
@@ -65,9 +64,7 @@ func (e *cmsAgentExecutor) Execute(ctx context.Context, execCtx *a2asrv.Executor
 		// Extract message from A2A request
 		var userMessage string
 		for _, part := range execCtx.Message.Parts {
-			if textPart, ok := part.(*a2a.TextPart); ok {
-				userMessage += textPart.Text
-			}
+			userMessage += part.Text()
 		}
 
 		// Call ChatService (this is where we'd bridge A2A to our internal Agentic system)

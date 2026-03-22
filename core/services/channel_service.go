@@ -1,9 +1,11 @@
 package services
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"strconv"
 	"time"
 
@@ -165,90 +167,88 @@ func (s *ChannelService) GetAuthLogs(ctx context.Context, userId int64, paginati
 		var l descriptors.AuthLog
 		if err := rows.Scan(&l.Id, &l.UserId, &l.ChannelType, &l.Action, &l.IPAddress, &l.UserAgent, &l.Success, &l.Metadata, &l.CreatedAt); err != nil {
 			return nil, 0, err
-		import (
-			"bytes"
-			"context"
-			"encoding/json"
-			"fmt"
-			"net/http"
-			"strconv"
-			"time"
-		...
-		func (s *ChannelService) SendNotification(ctx context.Context, userId int64, message string, preferredChannels []descriptors.ChannelType) error {
-			channels, err := s.GetChannelsByUserId(ctx, userId)
-			if err != nil {
-				return err
-			}
+		}
+		logs = append(logs, &l)
+	}
 
-			for _, c := range channels {
-				if !c.IsAuthenticated {
-					continue
-				}
+	return logs, total, nil
+}
 
-				isPreferred := false
-				if len(preferredChannels) == 0 {
+func (s *ChannelService) SendNotification(ctx context.Context, userId int64, message string, preferredChannels []descriptors.ChannelType) error {
+	channels, err := s.GetChannelsByUserId(ctx, userId)
+	if err != nil {
+		return err
+	}
+
+	for _, c := range channels {
+		if !c.IsAuthenticated {
+			continue
+		}
+
+		isPreferred := false
+		if len(preferredChannels) == 0 {
+			isPreferred = true
+		} else {
+			for _, pc := range preferredChannels {
+				if pc == c.ChannelType {
 					isPreferred = true
-				} else {
-					for _, pc := range preferredChannels {
-						if pc == c.ChannelType {
-							isPreferred = true
-							break
-						}
-					}
-				}
-
-				if isPreferred {
-					err := s.sendToGateway(ctx, c.ChannelType, c.Identifier, message)
-					if err != nil {
-						fmt.Printf("Error sending to %s gateway: %v\n", c.ChannelType, err)
-						// Continue to other channels even if one fails
-					}
+					break
 				}
 			}
-
-			return nil
 		}
 
-		func (s *ChannelService) sendToGateway(ctx context.Context, channelType descriptors.ChannelType, identifier string, message string) error {
-			var cfg descriptors.ChannelConfig
-			switch channelType {
-			case descriptors.ChannelWhatsApp:
-				cfg = s.config.WhatsApp
-			case descriptors.ChannelEmail:
-				cfg = s.config.Email
-			case descriptors.ChannelSignal:
-				cfg = s.config.Signal
-			case descriptors.ChannelTelegram:
-				cfg = s.config.Telegram
-			case descriptors.ChannelX:
-				cfg = s.config.X
-			case descriptors.ChannelBluesky:
-				cfg = s.config.Bluesky
-			}
-
-			if !cfg.Enabled || cfg.GatewayURL == "" {
-				return fmt.Errorf("gateway for %s is not enabled or URL is missing", channelType)
-			}
-
-			payload := map[string]string{
-				"to":      identifier,
-				"message": message,
-			}
-			jsonData, _ := json.Marshal(payload)
-
-			// In real world, you might add an API Key header here
-			resp, err := http.Post(cfg.GatewayURL+"/api/send", "application/json", bytes.NewBuffer(jsonData))
+		if isPreferred {
+			err := s.sendToGateway(ctx, c.ChannelType, c.Identifier, message)
 			if err != nil {
-				return err
+				fmt.Printf("Error sending to %s gateway: %v\n", c.ChannelType, err)
+				// Continue to other channels even if one fails
 			}
-			defer resp.Body.Close()
-
-			if resp.StatusCode >= 400 {
-				return fmt.Errorf("gateway returned error status: %d", resp.StatusCode)
-			}
-
-			return nil
 		}
+	}
+
+	return nil
+}
+
+func (s *ChannelService) sendToGateway(ctx context.Context, channelType descriptors.ChannelType, identifier string, message string) error {
+	var cfg descriptors.ChannelConfig
+	switch channelType {
+	case descriptors.ChannelWhatsApp:
+		cfg = s.config.WhatsApp
+	case descriptors.ChannelEmail:
+		cfg = s.config.Email
+	case descriptors.ChannelSignal:
+		cfg = s.config.Signal
+	case descriptors.ChannelTelegram:
+		cfg = s.config.Telegram
+	case descriptors.ChannelX:
+		cfg = s.config.X
+	case descriptors.ChannelBluesky:
+		cfg = s.config.Bluesky
+	}
+
+	if !cfg.Enabled || cfg.GatewayURL == "" {
+		return fmt.Errorf("gateway for %s is not enabled or URL is missing", channelType)
+	}
+
+	payload := map[string]string{
+		"to":      identifier,
+		"message": message,
+	}
+	jsonData, _ := json.Marshal(payload)
+
+	// In real world, you might add an API Key header here
+	resp, err := http.Post(cfg.GatewayURL+"/api/send", "application/json", bytes.NewBuffer(jsonData))
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode >= 400 {
+		return fmt.Errorf("gateway returned error status: %d", resp.StatusCode)
+	}
+
+	return nil
+}
 
 
 func (s *ChannelService) HandleInbound(ctx context.Context, channelType descriptors.ChannelType, identifier string, payload map[string]interface{}) error {
