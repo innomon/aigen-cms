@@ -3,7 +3,6 @@ package api
 import (
 	"encoding/json"
 	"net/http"
-	"strconv"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/innomon/aigen-cms/core/descriptors"
@@ -111,12 +110,15 @@ func (a *ChannelApi) GetMyAuthLogs(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	limit, _ := strconv.Atoi(r.URL.Query().Get("limit"))
-	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
+	limitStr := r.URL.Query().Get("limit")
+	offsetStr := r.URL.Query().Get("offset")
 
-	pagination := datamodels.Pagination{
-		Limit:  limit,
-		Offset: offset,
+	pagination := datamodels.Pagination{}
+	if limitStr != "" {
+		pagination.Limit = &limitStr
+	}
+	if offsetStr != "" {
+		pagination.Offset = &offsetStr
 	}
 
 	logs, total, err := a.channelService.GetAuthLogs(r.Context(), userId, pagination)
