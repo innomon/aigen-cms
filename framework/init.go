@@ -31,13 +31,26 @@ func isExternalDomain(domain string) bool {
 	return true
 }
 
-func Start(cfg *Config) error {
+// App represents the initialized AiGen CMS application.
+type App struct {
+	Router            chi.Router
+	Config            *Config
+	DAO               relationdbdao.IPrimaryDao
+	EntityService     services.IEntityService
+	SchemaService     services.ISchemaService
+	AuthService       services.IAuthService
+	PageService       *services.PageService
+	PermissionService *services.PermissionService
+	A2UIService       *services.A2UIService
+}
+
+// NewApp initializes all services and the router, but does not start the server.
+func NewApp(cfg *Config) (*App, error) {
 	// Initialize Database
 	dao, err := relationdbdao.CreateDao(descriptors.DatabaseProvider(cfg.DatabaseType), cfg.DatabaseDSN)
 	if err != nil {
-		return fmt.Errorf("failed to create dao: %w", err)
+		return nil, fmt.Errorf("failed to create dao: %w", err)
 	}
-	defer dao.Close()
 
 	// Ensure core tables exist
 	_, err = dao.GetDb().ExecContext(context.Background(), `
@@ -89,7 +102,7 @@ func Start(cfg *Config) error {
 		);
 	`)
 	if err != nil {
-		return fmt.Errorf("failed to create core tables: %w", err)
+		return nil, fmt.Errorf("failed to create core tables: %w", err)
 	}
 
 	// Initialize Services
@@ -140,95 +153,6 @@ func Start(cfg *Config) error {
 
 	a2aService := services.NewA2AService(chatService, cfg.Domain)
 	mcpService := services.NewMCPService(schemaService, entityService, authService, cfg.MCP)
-
-	// Initialize Prototype Components for A2UI
-	a2uiService.UpdateComponent(context.Background(), services.A2UIComponent{
-		ID:   "root",
-		Type: "Column",
-		Children: []string{"header", "card-1", "card-2", "card-3"},
-	})
-	a2uiService.UpdateComponent(context.Background(), services.A2UIComponent{
-		ID:   "header",
-		Type: "Heading",
-		Attributes: map[string]interface{}{
-			"content": "A2UI Agent Intelligence Hub",
-			"level":   1,
-		},
-	})
-	a2uiService.UpdateComponent(context.Background(), services.A2UIComponent{
-		ID:   "card-1",
-		Type: "Card",
-		Children: []string{"counter-text", "increment-btn"},
-	})
-	a2uiService.UpdateComponent(context.Background(), services.A2UIComponent{
-		ID:   "counter-text",
-		Type: "Text",
-		Attributes: map[string]interface{}{
-			"content": "Live System Counter: 0",
-			"count":   0.0,
-		},
-	})
-	a2uiService.UpdateComponent(context.Background(), services.A2UIComponent{
-		ID:   "increment-btn",
-		Type: "Button",
-		Attributes: map[string]interface{}{
-			"label":   "Trigger Agent Signal",
-			"variant": "success",
-			"action":  "increment",
-		},
-	})
-
-	// Add Data Table Card
-	a2uiService.UpdateComponent(context.Background(), services.A2UIComponent{
-		ID:   "card-2",
-		Type: "Card",
-		Children: []string{"table-title", "audit-table"},
-	})
-	a2uiService.UpdateComponent(context.Background(), services.A2UIComponent{
-		ID:   "table-title",
-		Type: "Heading",
-		Attributes: map[string]interface{}{
-			"content": "Recent System Activity",
-			"level":   4,
-		},
-	})
-	a2uiService.UpdateComponent(context.Background(), services.A2UIComponent{
-		ID:   "audit-table",
-		Type: "DataTable",
-		Attributes: map[string]interface{}{
-			"columns": []string{"User", "Action", "Timestamp"},
-			"rows": []map[string]interface{}{
-				{"User": "admin@example.com", "Action": "Login", "Timestamp": "2024-03-20 10:00:01"},
-				{"User": "editor@example.com", "Action": "Update Lead", "Timestamp": "2024-03-20 10:15:22"},
-				{"User": "admin@example.com", "Action": "Delete Log", "Timestamp": "2024-03-20 11:30:00"},
-			},
-		},
-	})
-
-	// Add Graph Card
-	a2uiService.UpdateComponent(context.Background(), services.A2UIComponent{
-		ID:   "card-3",
-		Type: "Card",
-		Children: []string{"chart-title", "traffic-chart"},
-	})
-	a2uiService.UpdateComponent(context.Background(), services.A2UIComponent{
-		ID:   "chart-title",
-		Type: "Heading",
-		Attributes: map[string]interface{}{
-			"content": "Traffic Analytics",
-			"level":   4,
-		},
-	})
-	a2uiService.UpdateComponent(context.Background(), services.A2UIComponent{
-		ID:   "traffic-chart",
-		Type: "Chart",
-		Attributes: map[string]interface{}{
-			"chartType": "line",
-			"label":     "Requests per Minute",
-			"labels":    []string{"10:00", "10:10", "10:20", "10:30", "10:40", "10:50"},
-			"data":      []float64{12, 19, 3, 5, 2, 3},
-		},
-	})
 
 	// Initialize APIs
 	authApi := api.NewAuthApi(authService, permissionService)
@@ -283,27 +207,52 @@ func Start(cfg *Config) error {
 		chatApi.Register(r)
 	}
 
-	if isExternalDomain(cfg.Domain) {
+	return &App{
+		Router:            r,
+		Config:            cfg,
+		DAO:               dao,
+		EntityService:     entityService,
+		SchemaService:     schemaService,
+		AuthService:       authService,
+		PageService:       pageService,
+		PermissionService: permissionService,
+		A2UIService:       a2uiService,
+	}, nil
+}
+
+// Run starts the HTTP/HTTPS server.
+func (a *App) Run() error {
+	if isExternalDomain(a.Config.Domain) {
 		certManager := autocert.Manager{
 			Prompt:     autocert.AcceptTOS,
-			HostPolicy: autocert.HostWhitelist(cfg.Domain),
+			HostPolicy: autocert.HostWhitelist(a.Config.Domain),
 			Cache:      autocert.DirCache("certs"),
 		}
 
 		server := &http.Server{
 			Addr:    ":443",
-			Handler: r,
+			Handler: a.Router,
 			TLSConfig: &tls.Config{
 				GetCertificate: certManager.GetCertificate,
 			},
 		}
 
-		fmt.Printf("Starting AiGen CMS on %s with autocert...\n", cfg.Domain)
+		fmt.Printf("Starting AiGen CMS on %s with autocert...\n", a.Config.Domain)
 		// Redirect HTTP to HTTPS
 		go http.ListenAndServe(":80", certManager.HTTPHandler(nil))
 		return server.ListenAndServeTLS("", "")
 	} else {
-		fmt.Printf("Starting AiGen CMS on :%s...\n", cfg.Port)
-		return http.ListenAndServe(":"+cfg.Port, r)
+		fmt.Printf("Starting AiGen CMS on :%s...\n", a.Config.Port)
+		return http.ListenAndServe(":"+a.Config.Port, a.Router)
 	}
+}
+
+// Start is a convenience wrapper that initializes and runs the app.
+func Start(cfg *Config) error {
+	app, err := NewApp(cfg)
+	if err != nil {
+		return err
+	}
+	defer app.DAO.Close()
+	return app.Run()
 }
