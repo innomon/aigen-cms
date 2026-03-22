@@ -24,12 +24,40 @@ func NewChannelApi(channelService services.IChannelService, authApi *AuthApi) *C
 
 func (a *ChannelApi) Register(r chi.Router) {
 	r.Route("/api/channels", func(r chi.Router) {
-		r.Use(a.authApi.JWTMiddleware)
-		r.Post("/", a.RegisterChannel)
-		r.Post("/verify", a.VerifyChannel)
-		r.Get("/", a.GetMyChannels)
-		r.Get("/logs", a.GetMyAuthLogs)
+		// Public webhook for external ADKs (whatsADK, mailADK, etc.)
+		r.Post("/webhook/{type}", a.HandleWebhook)
+
+		// Protected routes for users
+		r.Group(func(r chi.Router) {
+			r.Use(a.authApi.JWTMiddleware)
+			r.Post("/", a.RegisterChannel)
+			r.Post("/verify", a.VerifyChannel)
+			r.Get("/", a.GetMyChannels)
+			r.Get("/logs", a.GetMyAuthLogs)
+		})
 	})
+}
+
+func (a *ChannelApi) HandleWebhook(w http.ResponseWriter, r *http.Request) {
+	channelType := descriptors.ChannelType(chi.URLParam(r, "type"))
+	
+	var payload map[string]interface{}
+	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	// For MVP: Simple identifier extraction. 
+	// In production, you would verify a shared secret or API key here.
+	identifier, _ := payload["from"].(string)
+
+	err := a.channelService.HandleInbound(r.Context(), channelType, identifier, payload)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
 }
 
 type registerChannelRequest struct {
